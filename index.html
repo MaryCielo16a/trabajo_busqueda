@@ -251,9 +251,14 @@
             color: #7b1fa2;
         }
 
+        .source-indeed {
+            background: #e3f2fd;
+            color: #2557a7;
+        }
+
         .source-linkedin {
             background: #e8f5e9;
-            color: #388e3c;
+            color: #0a66c2;
         }
 
         .job-company {
@@ -381,8 +386,8 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>💼 Job Search Automation</h1>
-            <p>Tu sistema automático de búsqueda de trabajo - Frontend, React, JavaScript, Node.js</p>
+            <h1>💼 Job Search Automation - Peru</h1>
+            <p>Busqueda automatica en Computrabajo, Bumeran, Indeed y LinkedIn - Frontend, React, JavaScript, Node.js, Data Analyst</p>
         </div>
 
         <!-- Controls -->
@@ -436,8 +441,16 @@
                 <div class="number" id="statComputrabajo">0</div>
             </div>
             <div class="stat-card">
-                <h3>Bumerán</h3>
+                <h3>Bumeran</h3>
                 <div class="number" id="statBumeran">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Indeed</h3>
+                <div class="number" id="statIndeed">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>LinkedIn</h3>
+                <div class="number" id="statLinkedin">0</div>
             </div>
         </div>
 
@@ -519,6 +532,8 @@
                 document.getElementById('statRemote').textContent = data.remote_jobs;
                 document.getElementById('statComputrabajo').textContent = data.by_source.computrabajo || 0;
                 document.getElementById('statBumeran').textContent = data.by_source.bumeran || 0;
+                document.getElementById('statIndeed').textContent = data.by_source.indeed || 0;
+                document.getElementById('statLinkedin').textContent = data.by_source.linkedin || 0;
             }
         }
 
