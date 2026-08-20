@@ -492,6 +492,32 @@ class handler(BaseHTTPRequestHandler):
         elif path == "/api/scrape_status":
             self._json_response(200, {"is_scraping": False, "progress": 100})
 
+        elif path == "/api/cron":
+            try:
+                keywords = [k.strip() for k in KEYWORDS if k.strip()]
+                ct_jobs = scrape_computrabajo(keywords, pages=1)
+                bm_jobs = scrape_bumeran(keywords, pages=1)
+                in_jobs = scrape_indeed(keywords, pages=1)
+                li_jobs = scrape_linkedin(keywords, pages=1)
+
+                all_jobs = ct_jobs + bm_jobs + in_jobs + li_jobs
+                added = 0
+                for j in all_jobs:
+                    added += save_job(j)
+
+                email_sent = False
+                if all_jobs:
+                    email_sent = send_email(all_jobs)
+
+                self._json_response(200, {
+                    "success": True,
+                    "message": f"Cron: {len(all_jobs)} ofertas, {added} nuevas.",
+                    "email_sent": email_sent,
+                    "jobs_found": len(all_jobs),
+                })
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
         else:
             self._json_response(404, {"success": False, "error": "Not found"})
 
