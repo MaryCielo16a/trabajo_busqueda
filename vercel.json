@@ -6,11 +6,6 @@
       "schedule": "0 13 * * *"
     }
   ],
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 60
-    }
-  },
   "builds": [
     {
       "src": "index.html",
@@ -18,7 +13,10 @@
     },
     {
       "src": "api/index.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxDuration": 60
+      }
     }
   ],
   "routes": [

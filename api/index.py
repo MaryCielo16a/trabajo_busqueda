@@ -608,7 +608,7 @@ class handler(BaseHTTPRequestHandler):
                 self._json_response(500, {"success": False, "error": str(e)})
 
         else:
-            self._json_response(404, {"success": False, "error": "Not found", "debug_path": path, "debug_raw": self.path})
+            self._json_response(404, {"success": False, "error": "Not found", "path": path})
 
     def do_POST(self):
         parsed = urlparse(self.path)
