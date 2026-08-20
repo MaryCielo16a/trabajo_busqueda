@@ -357,6 +357,106 @@
             color: #856404;
         }
 
+        .filters-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tag.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .filter-tag.inactive {
+            background: #f0f0f0;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .filter-tag .remove-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            margin-left: 2px;
+            opacity: 0.7;
+        }
+
+        .filter-tag .remove-btn:hover {
+            opacity: 1;
+        }
+
+        .add-filter-form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .add-filter-form input {
+            flex: 1;
+            padding: 8px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .add-filter-form input:focus {
+            border-color: #667eea;
+        }
+
+        .add-filter-form button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .add-filter-form button:hover {
+            background: #5568d3;
+        }
+
+        .filter-info {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
         @media (max-width: 768px) {
             .stats {
                 grid-template-columns: 1fr;
@@ -418,6 +518,19 @@
             </button>
         </div>
 
+        <!-- Filters -->
+        <div class="filters-section">
+            <h2>🔧 Filtros de busqueda</h2>
+            <div class="filter-tags" id="filterTags">
+                <span style="color:#999">Cargando filtros...</span>
+            </div>
+            <div class="add-filter-form">
+                <input type="text" id="newFilter" placeholder="Ej: analista de datos, python, react..." onkeypress="if(event.key==='Enter')addFilter()">
+                <button onclick="addFilter()">+ Agregar</button>
+            </div>
+            <p class="filter-info">Click en un filtro para activar/desactivar. La X lo elimina. Estos filtros se usan en la busqueda automatica diaria.</p>
+        </div>
+
         <!-- Progress bar -->
         <div class="progress-container" id="progressContainer">
             <p id="progressText">Buscando ofertas...</p>
@@ -469,9 +582,9 @@
     <script>
         // Load jobs on page load
         document.addEventListener('DOMContentLoaded', () => {
+            loadFilters();
             loadJobs();
             loadStats();
-            // Refresh every 30 seconds
             setInterval(loadJobs, 30000);
             setInterval(loadStats, 30000);
         });
@@ -607,6 +720,75 @@
                 } catch (error) {
                     alert('❌ Error: ' + error.message);
                 }
+            }
+        }
+
+        async function loadFilters() {
+            try {
+                const response = await fetch('/api/filters');
+                const data = await response.json();
+                if (!data.success) return;
+
+                const container = document.getElementById('filterTags');
+                if (data.filters.length === 0) {
+                    container.innerHTML = '<span style="color:#999">No hay filtros. Agrega uno abajo.</span>';
+                    return;
+                }
+
+                container.innerHTML = data.filters.map(f => `
+                    <span class="filter-tag ${f.active ? 'active' : 'inactive'}" onclick="toggleFilter('${escapeHtml(f.keyword)}', ${f.active ? 'false' : 'true'})">
+                        ${escapeHtml(f.keyword)}
+                        <button class="remove-btn" onclick="event.stopPropagation(); removeFilter('${escapeHtml(f.keyword)}')" title="Eliminar">&times;</button>
+                    </span>
+                `).join('');
+            } catch (e) {
+                document.getElementById('filterTags').innerHTML = '<span style="color:#999">Error cargando filtros</span>';
+            }
+        }
+
+        async function addFilter() {
+            const input = document.getElementById('newFilter');
+            const keyword = input.value.trim();
+            if (!keyword) return;
+
+            try {
+                const response = await fetch('/api/filters', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: 'add', keyword: keyword})
+                });
+                const data = await response.json();
+                input.value = '';
+                loadFilters();
+            } catch (e) {
+                alert('Error agregando filtro');
+            }
+        }
+
+        async function removeFilter(keyword) {
+            if (!confirm('Eliminar filtro "' + keyword + '"?')) return;
+            try {
+                await fetch('/api/filters', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: 'remove', keyword: keyword})
+                });
+                loadFilters();
+            } catch (e) {
+                alert('Error eliminando filtro');
+            }
+        }
+
+        async function toggleFilter(keyword, active) {
+            try {
+                await fetch('/api/filters', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: 'toggle', keyword: keyword, active: active === 'true'})
+                });
+                loadFilters();
+            } catch (e) {
+                alert('Error actualizando filtro');
             }
         }
 

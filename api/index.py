@@ -20,11 +20,7 @@ from bs4 import BeautifulSoup
 
 # ---- CONFIG ----
 DB_PATH = "/tmp/jobs.db"
-KEYWORDS = os.getenv(
-    "KEYWORDS",
-    "frontend remoto,react remoto,desarrollador junior,analista de datos,javascript remoto"
-).split(",")
-REMOTE_ONLY = os.getenv("REMOTE_ONLY", "true").lower() == "true"
+DEFAULT_KEYWORDS = "frontend remoto,react remoto,desarrollador junior,analista de datos,javascript remoto"
 
 COMPUTRABAJO_BASE_URL = "https://www.computrabajo.com.pe"
 BUMERAN_BASE_URL = "https://www.bumeran.com.pe"
@@ -69,6 +65,32 @@ def init_db():
             required_experience TEXT
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS filters (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            keyword TEXT NOT NULL UNIQUE,
+            active INTEGER DEFAULT 1,
+            created_date TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
+    existing = conn.execute("SELECT COUNT(*) FROM filters").fetchone()[0]
+    if existing == 0:
+        for kw in DEFAULT_KEYWORDS.split(","):
+            kw = kw.strip()
+            if kw:
+                conn.execute(
+                    "INSERT OR IGNORE INTO filters (keyword, active, created_date) VALUES (?, 1, ?)",
+                    (kw, datetime.now().isoformat())
+                )
+        conn.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES ('remote_only', 'true')"
+        )
     conn.commit()
     conn.close()
 
@@ -135,6 +157,69 @@ def save_job(job_data):
     finally:
         conn.close()
     return added
+
+
+def get_active_keywords():
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute("SELECT keyword FROM filters WHERE active = 1").fetchall()
+    conn.close()
+    if rows:
+        return [r[0] for r in rows]
+    return [k.strip() for k in DEFAULT_KEYWORDS.split(",") if k.strip()]
+
+
+def get_all_filters():
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute("SELECT * FROM filters ORDER BY id").fetchall()
+    remote_only = conn.execute("SELECT value FROM settings WHERE key = 'remote_only'").fetchone()
+    conn.close()
+    return {
+        "filters": [dict(r) for r in rows],
+        "remote_only": remote_only[0] == "true" if remote_only else True,
+    }
+
+
+def add_filter(keyword):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.execute(
+            "INSERT INTO filters (keyword, active, created_date) VALUES (?, 1, ?)",
+            (keyword.strip().lower(), datetime.now().isoformat())
+        )
+        conn.commit()
+        result = True
+    except sqlite3.IntegrityError:
+        result = False
+    conn.close()
+    return result
+
+
+def remove_filter(keyword):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("DELETE FROM filters WHERE keyword = ?", (keyword.strip().lower(),))
+    conn.commit()
+    conn.close()
+
+
+def toggle_filter(keyword, active):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("UPDATE filters SET active = ? WHERE keyword = ?", (1 if active else 0, keyword.strip().lower()))
+    conn.commit()
+    conn.close()
+
+
+def set_remote_only(value):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('remote_only', ?)", ("true" if value else "false",))
+    conn.commit()
+    conn.close()
 
 
 def check_remote(text):
@@ -489,12 +574,16 @@ class handler(BaseHTTPRequestHandler):
             stats = get_stats()
             self._json_response(200, {"success": True, **stats})
 
+        elif path == "/api/filters":
+            data = get_all_filters()
+            self._json_response(200, {"success": True, **data})
+
         elif path == "/api/scrape_status":
             self._json_response(200, {"is_scraping": False, "progress": 100})
 
         elif path == "/api/cron":
             try:
-                keywords = [k.strip() for k in KEYWORDS if k.strip()]
+                keywords = get_active_keywords()
                 ct_jobs = scrape_computrabajo(keywords, pages=1)
                 bm_jobs = scrape_bumeran(keywords, pages=1)
                 in_jobs = scrape_indeed(keywords, pages=1)
@@ -527,7 +616,7 @@ class handler(BaseHTTPRequestHandler):
 
         if path == "/api/scrape":
             try:
-                keywords = [k.strip() for k in KEYWORDS if k.strip()]
+                keywords = get_active_keywords()
 
                 ct_jobs = scrape_computrabajo(keywords, pages=1)
                 bm_jobs = scrape_bumeran(keywords, pages=1)
@@ -555,6 +644,31 @@ class handler(BaseHTTPRequestHandler):
                         "linkedin": len(li_jobs),
                     }
                 })
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
+        elif path == "/api/filters":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                action = body.get("action", "add")
+                keyword = body.get("keyword", "").strip().lower()
+
+                if action == "add" and keyword:
+                    ok = add_filter(keyword)
+                    self._json_response(200, {"success": ok, "message": f"Filtro '{keyword}' agregado" if ok else "Filtro ya existe"})
+                elif action == "remove" and keyword:
+                    remove_filter(keyword)
+                    self._json_response(200, {"success": True, "message": f"Filtro '{keyword}' eliminado"})
+                elif action == "toggle":
+                    active = body.get("active", True)
+                    toggle_filter(keyword, active)
+                    self._json_response(200, {"success": True, "message": f"Filtro '{keyword}' {'activado' if active else 'desactivado'}"})
+                elif action == "set_remote":
+                    set_remote_only(body.get("remote_only", True))
+                    self._json_response(200, {"success": True})
+                else:
+                    self._json_response(400, {"success": False, "error": "Keyword requerido"})
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
 
