@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 DB_PATH = "/tmp/jobs.db"
 KEYWORDS = os.getenv(
     "KEYWORDS",
-    "react,frontend,javascript,vue,angular,html,css,node.js,junior,trainee,desarrollador,programador,analista de datos,data analyst"
+    "frontend remoto,react remoto,desarrollador junior,analista de datos,javascript remoto"
 ).split(",")
 REMOTE_ONLY = os.getenv("REMOTE_ONLY", "true").lower() == "true"
 
@@ -158,7 +158,7 @@ def scrape_computrabajo(keywords, pages=1):
             ]
             for url in urls:
                 try:
-                    resp = session.get(url, timeout=10)
+                    resp = session.get(url, timeout=6)
                     if resp.status_code != 200:
                         continue
                     soup = BeautifulSoup(resp.content, "html.parser")
@@ -209,7 +209,6 @@ def scrape_computrabajo(keywords, pages=1):
                             break
                 except Exception:
                     continue
-            time.sleep(0.5)
     return jobs
 
 
@@ -229,7 +228,7 @@ def scrape_bumeran(keywords, pages=1):
             ]
             for url in urls:
                 try:
-                    resp = session.get(url, timeout=10)
+                    resp = session.get(url, timeout=6)
                     if resp.status_code != 200:
                         continue
                     soup = BeautifulSoup(resp.content, "html.parser")
@@ -277,7 +276,6 @@ def scrape_bumeran(keywords, pages=1):
                             break
                 except Exception:
                     continue
-            time.sleep(0.5)
     return jobs
 
 
@@ -294,7 +292,7 @@ def scrape_indeed(keywords, pages=1):
             start = page * 10
             url = f"{INDEED_BASE_URL}/jobs?q={quote(kw)}&l=Peru&start={start}"
             try:
-                resp = session.get(url, timeout=10)
+                resp = session.get(url, timeout=6)
                 if resp.status_code != 200:
                     continue
                 soup = BeautifulSoup(resp.content, "html.parser")
@@ -343,7 +341,6 @@ def scrape_indeed(keywords, pages=1):
                     })
             except Exception:
                 continue
-            time.sleep(0.5)
     return jobs
 
 
@@ -360,7 +357,7 @@ def scrape_linkedin(keywords, pages=1):
             start = page * 25
             url = f"{LINKEDIN_BASE_URL}/jobs/search?keywords={quote(kw)}&location=Peru&f_WT=2&start={start}"
             try:
-                resp = session.get(url, timeout=10)
+                resp = session.get(url, timeout=6)
                 if resp.status_code != 200:
                     continue
                 soup = BeautifulSoup(resp.content, "html.parser")
@@ -404,7 +401,6 @@ def scrape_linkedin(keywords, pages=1):
                     })
             except Exception:
                 continue
-            time.sleep(0.5)
     return jobs
 
 
