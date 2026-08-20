@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Search - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #ee5a52;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .checkbox-label input {
+            cursor: pointer;
+        }
+
+        .progress-container {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .jobs-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .jobs-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .jobs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .job-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .job-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            border-color: #667eea;
+        }
+
+        .job-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .job-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+
+        .job-source {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .source-computrabajo {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .source-bumeran {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .source-linkedin {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .job-company {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .job-details {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .job-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #777;
+        }
+
+        .job-detail.remote {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .job-actions a {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .job-actions a:hover {
+            background: #5568d3;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .badge.new {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .job-card-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .job-details {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>💼 Job Search Automation</h1>
+            <p>Tu sistema automático de búsqueda de trabajo - Frontend, React, JavaScript, Node.js</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="scrapeJobs(1)">
+                🔍 Búsqueda rápida (1 página)
+            </button>
+            <button class="btn btn-primary" onclick="scrapeJobs(3)">
+                🔎 Búsqueda normal (3 páginas)
+            </button>
+            <button class="btn btn-primary" onclick="scrapeJobs(5)">
+                🔎🔎 Búsqueda profunda (5 páginas)
+            </button>
+
+            <div class="filters">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="remoteOnly" checked>
+                    Solo remoto
+                </label>
+            </div>
+
+            <button class="btn btn-secondary" onclick="loadStats()">
+                📊 Actualizar stats
+            </button>
+
+            <button class="btn btn-danger" onclick="confirmClear()">
+                🗑️ Limpiar BD
+            </button>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-container" id="progressContainer">
+            <p id="progressText">Buscando ofertas...</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats" id="statsContainer">
+            <div class="stat-card">
+                <h3>Total ofertas</h3>
+                <div class="number" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Remoto</h3>
+                <div class="number" id="statRemote">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Computrabajo</h3>
+                <div class="number" id="statComputrabajo">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Bumerán</h3>
+                <div class="number" id="statBumeran">0</div>
+            </div>
+        </div>
+
+        <!-- Jobs -->
+        <div class="jobs-container">
+            <h2>💼 Ofertas disponibles</h2>
+            <div class="jobs-list" id="jobsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Cargando ofertas...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load jobs on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadJobs();
+            loadStats();
+            // Refresh every 30 seconds
+            setInterval(loadJobs, 30000);
+            setInterval(loadStats, 30000);
+        });
+
+        // Listen for remote only checkbox
+        document.getElementById('remoteOnly').addEventListener('change', loadJobs);
+
+        async function loadJobs() {
+            const remoteOnly = document.getElementById('remoteOnly').checked;
+            const response = await fetch(`/api/jobs?limit=50&remote_only=${remoteOnly}`);
+            const data = await response.json();
+
+            const jobsList = document.getElementById('jobsList');
+
+            if (!data.success || data.count === 0) {
+                jobsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>📭 No hay ofertas aún</p>
+                        <p style="font-size: 12px; margin-top: 10px;">Haz click en "Búsqueda rápida" para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+
+            jobsList.innerHTML = data.jobs.map(job => `
+                <div class="job-card">
+                    <div class="job-card-header">
+                        <div class="job-title">${escapeHtml(job.title)}</div>
+                        <span class="job-source source-${job.source}">${job.source.toUpperCase()}</span>
+                    </div>
+                    <div class="job-company">🏢 ${escapeHtml(job.company)}</div>
+                    <div class="job-details">
+                        <div class="job-detail ${job.is_remote ? 'remote' : ''}">
+                            📍 ${job.is_remote ? '✓ Remoto' : job.location}
+                        </div>
+                        ${job.salary && job.salary !== 'Not specified' ? `
+                            <div class="job-detail">
+                                💰 ${escapeHtml(job.salary)}
+                            </div>
+                        ` : ''}
+                        <div class="job-detail">
+                            📅 ${new Date(job.posted_date).toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    <div class="job-actions">
+                        <a href="${job.url}" target="_blank">Ver oferta →</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadStats() {
+            const response = await fetch('/api/stats');
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('statTotal').textContent = data.total_jobs;
+                document.getElementById('statRemote').textContent = data.remote_jobs;
+                document.getElementById('statComputrabajo').textContent = data.by_source.computrabajo || 0;
+                document.getElementById('statBumeran').textContent = data.by_source.bumeran || 0;
+            }
+        }
+
+        async function scrapeJobs(pages) {
+            const btn = event.target;
+            btn.disabled = true;
+
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.classList.add('active');
+
+            try {
+                const response = await fetch('/api/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ pages: pages })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Poll for progress
+                    let isComplete = false;
+                    while (!isComplete) {
+                        const statusResponse = await fetch('/api/scrape_status');
+                        const statusData = await statusResponse.json();
+
+                        const progress = statusData.progress;
+                        document.getElementById('progressFill').style.width = progress + '%';
+                        document.getElementById('progressFill').textContent = progress + '%';
+
+                        if (!statusData.is_scraping) {
+                            isComplete = true;
+                            progressContainer.classList.remove('active');
+                            loadJobs();
+                            loadStats();
+                            alert('✅ ¡Búsqueda completada!');
+                        } else {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+                    }
+                } else {
+                    alert('❌ Error: ' + data.error);
+                    progressContainer.classList.remove('active');
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+                progressContainer.classList.remove('active');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmClear() {
+            if (confirm('⚠️ ¿Estás seguro? Esto borrará todas las ofertas guardadas.')) {
+                try {
+                    const response = await fetch('/api/jobs', {
+                        method: 'DELETE'
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert('✅ Base de datos limpiada');
+                        loadJobs();
+                        loadStats();
+                    } else {
+                        alert('❌ Error: ' + data.error);
+                    }
+                } catch (error) {
+                    alert('❌ Error: ' + error.message);
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+</body>
+</html>
