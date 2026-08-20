@@ -1,7 +1,7 @@
 """
-Vercel Serverless Function - Job Search API
+Vercel Serverless Function - Job Search API v2
 Single file with all logic embedded for Vercel compatibility.
-Configured for Peru job market.
+Configured for Peru job market. Includes editable filters.
 """
 import json
 import hashlib
