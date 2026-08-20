@@ -9,6 +9,7 @@ from scrapers.computrabajo_scraper import ComputrabajoScraper
 from scrapers.bumeran_scraper import BumeranScraper
 from database.models import init_db
 from config.settings import KEYWORDS
+from services.email_service import send_job_notification
 
 init_db()
 
@@ -25,9 +26,16 @@ class handler(BaseHTTPRequestHandler):
             bm_jobs = bm.search_jobs(keywords, pages=1)
             bm_added, _ = bm.save_jobs(bm_jobs)
 
+            # Send email notification if new jobs found
+            all_new_jobs = ct_jobs + bm_jobs
+            email_sent = False
+            if all_new_jobs:
+                email_sent = send_job_notification(all_new_jobs)
+
             result = {
                 "success": True,
-                "message": f"Scraping completed. Added {ct_added + bm_added} new jobs."
+                "message": f"Scraping completed. Added {ct_added + bm_added} new jobs.",
+                "email_sent": email_sent
             }
 
             self.send_response(200)
