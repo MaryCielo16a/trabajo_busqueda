@@ -359,6 +359,22 @@
             background: #5568d3;
         }
 
+        .btn-cv {
+            padding: 8px 16px;
+            background: #43a047;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cv:hover {
+            background: #388e3c;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -1022,6 +1038,7 @@
                     </div>
                     <div class="job-actions">
                         <a href="${job.url}" target="_blank">Ver oferta →</a>
+                        <button class="btn-cv" onclick="event.stopPropagation(); generateCV('${job.id}')">📄 Generar CV</button>
                     </div>
                 </div>
             `).join('');
@@ -1205,6 +1222,325 @@
             } catch (e) {
                 alert('Error actualizando filtro');
             }
+        }
+
+        // ---- CV GENERATOR ----
+        const CV_DATA = {
+            name: "Ana Maria Tapia Hurtado",
+            email: "anamariatapiahurtado3@gmail.com",
+            phone: "+51 918653701",
+            linkedin: "LinkedIn",
+            education: [
+                { title: "Universidad Peruana de Ciencias Aplicadas (UPC)", location: "Lima, PE", detail: "Estudiante 8vo ciclo de Ingenieria de Sistemas de Informacion | Facultad de Ingenieria", date: "Agosto 2021 – Actualidad" },
+                { title: "Secundaria en colegio Fermin del Castillo Arias", location: "Ica, PE", detail: "", date: "Marzo 2016 – Diciembre 2020" },
+                { title: "Introduccion a redes, CISCO", location: "", detail: "", date: "Septiembre 2020 – Enero 2021" },
+                { title: "Ganadora de beca Mujeres en Ciencia, PRONABEC", location: "", detail: "", date: "Mayo 2021 – Actualidad" }
+            ],
+            certifications: [
+                { name: "Curso de liderazgo personal, UPC", date: "Agosto 2021 – Noviembre 2021", tags: ["liderazgo"] },
+                { name: "Que es la ciencia de datos?", date: "Agosto 2023", tags: ["data"] },
+                { name: "Metodologia de la ciencia de datos, IBM", date: "Agosto 2023 – Octubre 2023", tags: ["data"] },
+                { name: "Herramientas para la ciencia de datos, IBM", date: "Agosto 2023 – Octubre 2023", tags: ["data"] },
+                { name: "Python for Data Science, AI & Development", date: "Marzo 2024 – Abril 2024", tags: ["data","python","backend"] },
+                { name: "Python Project for Data Science, IBM", date: "Marzo 2024 – Mayo 2024", tags: ["data","python","backend"] },
+                { name: "Fundamentos de Marketing Digital, Google", date: "Agosto 2024 – Septiembre 2024", tags: ["marketing"] },
+                { name: "Curso Excel basico - Intermedio", date: "Septiembre 2024 – Diciembre 2024", tags: ["data","excel"] }
+            ],
+            experience: [
+                {
+                    title: "Practicante de ingenieria de sistemas",
+                    company: "Total Weight & Systems S.A.C",
+                    location: "Lima, PE",
+                    date: "Enero – Abril 2025",
+                    roles: [
+                        "Mantuve la base de datos corporativa con un tiempo de disponibilidad del 99%, asegurando que los datos estuvieran siempre accesibles para el equipo.",
+                        "Administre mas de 50 accesos de usuarios a sistemas internos, garantizando la seguridad de la informacion mediante permisos adecuados.",
+                        "Recupere y organice mas de 200 GB de archivos, reduciendo el tiempo de acceso a documentos en un 20%.",
+                        "Desarrolle una funcionalidad que permitio a los usuarios realizar seguimientos en tiempo real, aumentando la eficiencia en la gestion de recursos en un 25%."
+                    ],
+                    tags: ["sistemas","backend","data"]
+                },
+                {
+                    title: "Practicante de Data Intelligence",
+                    company: "B. Braun Medical Peru SAC",
+                    location: "Lima, PE",
+                    date: "Octubre 2025 – Marzo 2026",
+                    roles: [
+                        "Disene y desplegue dashboards interactivos en Power BI para el seguimiento de KPIs criticos de ventas, logrando una mejora del 60% en la visibilidad de resultados estrategicos.",
+                        "Administre y analice grandes volumenes de datos en Salesforce, creando reportes personalizados que optimizaron el tiempo de toma de decisiones en un 70%.",
+                        "Implemente flujos de trabajo automatizados con Power Automate, reduciendo el tiempo dedicado a tareas manuales repetitivas en un 80%."
+                    ],
+                    tags: ["data","bi","analytics"]
+                }
+            ],
+            extracurricular: [
+                {
+                    title: "Voluntaria en Kaprichos perrunos",
+                    location: "Lima, PE",
+                    date: "Agosto – Noviembre 2021",
+                    roles: [
+                        "Llevamos comida para aproximadamente 100 perros, asegurando su bienestar nutricional.",
+                        "Apoye en el bano de mas de 60 perros junto a otros voluntarios."
+                    ],
+                    tags: ["social"]
+                },
+                {
+                    title: "Voluntaria Educativa – Area de tecnologia de ENTRECONDUCTAS",
+                    location: "Lima, PE",
+                    date: "Noviembre 2024 – Actualidad",
+                    roles: [
+                        "Realice analisis de datos para evaluar el impacto de programas educativos.",
+                        "Disene dashboards interactivos utilizando Power BI para visualizar metricas clave.",
+                        "Propuse soluciones basadas en los datos obtenidos, optimizando procesos."
+                    ],
+                    tags: ["data","bi"]
+                },
+                {
+                    title: "Voluntaria Educativa – Area de tecnologia de AESI",
+                    location: "Lima, PE",
+                    date: "Enero 2025 – Marzo 2025",
+                    roles: [
+                        "Desarrollo de la primera version de una pagina web para AESI.",
+                        "Participacion en reuniones con el lider de AESI para definir objetivos.",
+                        "Apoyo en diversas gestiones administrativas y operativas."
+                    ],
+                    tags: ["frontend","web"]
+                },
+                {
+                    title: "Colaborador en Proyecto (Desarrollo de Back-End)",
+                    company: "Influyo Corp S.A.",
+                    location: "Lima, PE",
+                    date: "Febrero 2025 – Agosto 2025",
+                    roles: [
+                        "Apoyo en el desarrollo de servicios de back-end utilizando Spring Boot y Java.",
+                        "Identifique y solucione mas de 30 bugs criticos, reduciendo las incidencias reportadas por el equipo de QA.",
+                        "Participacion en reuniones del equipo de proyecto, colaborando en la planificacion y ejecucion utilizando la metodologia Scrum.",
+                        "Implementacion de servicios y funciones escalables dentro de la arquitectura del sistema."
+                    ],
+                    tags: ["backend","java","scrum"]
+                }
+            ],
+            skills: {
+                "Desarrollo Web Backend": "Java, PostgreSQL, y SQL",
+                "Framework": "Spring Boot",
+                "Analisis de Datos": "Nivel intermedio en creacion de reportes SQL",
+                "Power BI": "Intermedio - Avanzado",
+                "Excel": "Avanzado",
+                "Project Microsoft": "Intermedio",
+                "SAP": "Intermedio",
+                "UX": "",
+                "Power Automate": "Intermedio",
+                "Power Apps": "Basico"
+            },
+            interests: ["Desarrollo de Soluciones en Ciencia de datos", "Desarrollo Android", "Desarrollo backend", "Gestion de proyectos"],
+            languages: ["Ingles intermedio", "Espanol Nativo"]
+        };
+
+        function getJobProfileTitle(job) {
+            const t = (job.title || '').toLowerCase();
+            if (t.includes('data') || t.includes('datos') || t.includes('analista') || t.includes('bi')) return 'Analista de Datos e Inteligencia de Negocios';
+            if (t.includes('frontend') || t.includes('front-end') || t.includes('react') || t.includes('vue') || t.includes('angular')) return 'Desarrolladora Frontend';
+            if (t.includes('fullstack') || t.includes('full stack') || t.includes('full-stack')) return 'Desarrolladora Full Stack';
+            if (t.includes('backend') || t.includes('back-end') || t.includes('java') || t.includes('python') || t.includes('node')) return 'Desarrolladora Backend';
+            if (t.includes('devops') || t.includes('cloud') || t.includes('aws') || t.includes('infraestructura')) return 'Ingeniera DevOps / Cloud';
+            if (t.includes('qa') || t.includes('testing') || t.includes('tester') || t.includes('calidad')) return 'QA Engineer';
+            if (t.includes('soporte') || t.includes('help desk') || t.includes('mesa de ayuda')) return 'Soporte de Sistemas';
+            if (t.includes('mobile') || t.includes('android') || t.includes('ios') || t.includes('flutter')) return 'Desarrolladora Mobile';
+            if (t.includes('sistemas') || t.includes('it') || t.includes('tecnologia')) return 'Ingeniera de Sistemas de Informacion';
+            return 'Practicante de Ingenieria de Sistemas de Informacion';
+        }
+
+        function getRelevantTags(job) {
+            const t = (job.title || '').toLowerCase();
+            const cat = job.category || 'otro';
+            const tags = new Set();
+            if (cat === 'data' || t.includes('data') || t.includes('analista') || t.includes('bi')) { tags.add('data'); tags.add('bi'); tags.add('analytics'); tags.add('excel'); }
+            if (cat === 'frontend' || t.includes('frontend') || t.includes('react') || t.includes('web')) { tags.add('frontend'); tags.add('web'); }
+            if (cat === 'backend' || t.includes('backend') || t.includes('java') || t.includes('python') || t.includes('spring')) { tags.add('backend'); tags.add('java'); tags.add('python'); }
+            if (cat === 'fullstack') { tags.add('frontend'); tags.add('backend'); tags.add('web'); tags.add('java'); }
+            if (cat === 'devops') { tags.add('sistemas'); }
+            if (cat === 'qa') { tags.add('scrum'); }
+            tags.add('sistemas');
+            return tags;
+        }
+
+        function sortByRelevance(items, relevantTags) {
+            return [...items].sort((a, b) => {
+                const aScore = (a.tags || []).filter(t => relevantTags.has(t)).length;
+                const bScore = (b.tags || []).filter(t => relevantTags.has(t)).length;
+                return bScore - aScore;
+            });
+        }
+
+        function getRelevantSkills(job) {
+            const cat = job.category || 'otro';
+            const t = (job.title || '').toLowerCase();
+            const all = Object.entries(CV_DATA.skills);
+            const priority = [];
+            const rest = [];
+
+            for (const [k, v] of all) {
+                const kl = k.toLowerCase();
+                if (cat === 'data' || t.includes('data') || t.includes('analista')) {
+                    if (['power bi','excel','analisis de datos','power automate','sap'].some(s => kl.includes(s))) { priority.push([k,v]); continue; }
+                }
+                if (cat === 'backend' || t.includes('backend') || t.includes('java')) {
+                    if (['backend','framework','desarrollo web'].some(s => kl.includes(s))) { priority.push([k,v]); continue; }
+                }
+                if (cat === 'frontend' || t.includes('frontend') || t.includes('web')) {
+                    if (['ux','desarrollo web','framework'].some(s => kl.includes(s))) { priority.push([k,v]); continue; }
+                }
+                rest.push([k,v]);
+            }
+            return [...priority, ...rest];
+        }
+
+        function getRelevantInterests(job) {
+            const cat = job.category || 'otro';
+            const ordered = [...CV_DATA.interests];
+            if (cat === 'data') {
+                const idx = ordered.findIndex(i => i.toLowerCase().includes('datos'));
+                if (idx > 0) { const item = ordered.splice(idx, 1)[0]; ordered.unshift(item); }
+            }
+            if (cat === 'backend') {
+                const idx = ordered.findIndex(i => i.toLowerCase().includes('backend'));
+                if (idx > 0) { const item = ordered.splice(idx, 1)[0]; ordered.unshift(item); }
+            }
+            return ordered;
+        }
+
+        function generateCV(jobId) {
+            const jobs = getStoredJobs();
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) { alert('Oferta no encontrada'); return; }
+
+            const profileTitle = getJobProfileTitle(job);
+            const relevantTags = getRelevantTags(job);
+            const sortedCerts = sortByRelevance(CV_DATA.certifications, relevantTags);
+            const sortedExp = sortByRelevance(CV_DATA.experience, relevantTags);
+            const sortedExtra = sortByRelevance(CV_DATA.extracurricular, relevantTags);
+            const skills = getRelevantSkills(job);
+            const interests = getRelevantInterests(job);
+
+            const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CV - ${CV_DATA.name} - ${escapeHtml(job.title)}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #333; max-width: 210mm; margin: 0 auto; padding: 20mm 18mm; line-height: 1.4; }
+.cv-name { font-size: 22pt; font-weight: bold; color: #1a1a2e; text-align: center; margin-bottom: 2px; }
+.cv-title { font-size: 12pt; color: #4a4a6a; text-align: center; margin-bottom: 6px; }
+.cv-contact { text-align: center; font-size: 10pt; color: #555; margin-bottom: 16px; }
+.cv-section { margin-bottom: 14px; }
+.cv-section-title { font-size: 12pt; font-weight: bold; color: #1a1a2e; border-bottom: 2px solid #1a1a2e; padding-bottom: 3px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.cv-entry { margin-bottom: 8px; }
+.cv-entry-header { display: flex; justify-content: space-between; align-items: baseline; }
+.cv-entry-title { font-weight: bold; font-size: 11pt; }
+.cv-entry-location { color: #555; font-size: 10pt; }
+.cv-entry-date { color: #555; font-size: 10pt; text-align: right; white-space: nowrap; }
+.cv-entry-detail { color: #444; font-size: 10pt; font-style: italic; }
+.cv-entry-company { font-size: 10pt; color: #555; margin-bottom: 2px; }
+.cv-roles { list-style: disc; margin-left: 20px; margin-top: 3px; }
+.cv-roles li { font-size: 10pt; margin-bottom: 2px; color: #333; }
+.cv-skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 20px; }
+.cv-skill-item { font-size: 10pt; }
+.cv-skill-item b { color: #1a1a2e; }
+.cv-interests { font-size: 10pt; color: #444; }
+.cv-languages { font-size: 10pt; }
+.cv-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 1px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; margin-left: 8px; }
+.no-print { text-align: center; margin-bottom: 20px; padding: 12px; background: #f0f2ff; border-radius: 8px; }
+.no-print button { padding: 10px 24px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin: 0 6px; }
+.no-print button:hover { background: #5568d3; }
+.no-print p { font-size: 12px; color: #666; margin-top: 6px; }
+@media print {
+    body { padding: 12mm 15mm; }
+    .no-print { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="no-print">
+    <button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+    <p>CV adaptado para: <b>${escapeHtml(job.title)}</b> en <b>${escapeHtml(job.company || 'Empresa')}</b></p>
+</div>
+
+<div class="cv-name">${CV_DATA.name}</div>
+<div class="cv-title">${profileTitle}</div>
+<div class="cv-contact">${CV_DATA.email} | ${CV_DATA.phone} | ${CV_DATA.linkedin}</div>
+
+<div class="cv-section">
+    <div class="cv-section-title">Formacion Academica y Certificaciones</div>
+    ${CV_DATA.education.map(e => `
+    <div class="cv-entry">
+        <div class="cv-entry-header">
+            <span class="cv-entry-title">${e.title}${e.location ? ', ' + e.location : ''}</span>
+            <span class="cv-entry-date">${e.date}</span>
+        </div>
+        ${e.detail ? `<div class="cv-entry-detail">${e.detail}</div>` : ''}
+    </div>`).join('')}
+</div>
+
+<div class="cv-section">
+    <div class="cv-section-title">Formacion Complementaria</div>
+    ${sortedCerts.map(c => `
+    <div class="cv-entry">
+        <div class="cv-entry-header">
+            <span class="cv-entry-title" style="font-weight:normal">${c.name}${c.tags.some(t => relevantTags.has(t)) ? '<span class="cv-badge">Relevante</span>' : ''}</span>
+            <span class="cv-entry-date">${c.date}</span>
+        </div>
+    </div>`).join('')}
+</div>
+
+<div class="cv-section">
+    <div class="cv-section-title">Experiencia Laboral</div>
+    ${sortedExp.map(e => `
+    <div class="cv-entry">
+        <div class="cv-entry-header">
+            <span class="cv-entry-title">${e.title}${(e.tags||[]).some(t => relevantTags.has(t)) ? '<span class="cv-badge">Relevante</span>' : ''}</span>
+            <span class="cv-entry-date">${e.date}</span>
+        </div>
+        <div class="cv-entry-company">${e.company} - ${e.location}</div>
+        <ul class="cv-roles">${e.roles.map(r => `<li>${r}</li>`).join('')}</ul>
+    </div>`).join('')}
+</div>
+
+<div class="cv-section">
+    <div class="cv-section-title">Actividades Extracurriculares</div>
+    ${sortedExtra.map(e => `
+    <div class="cv-entry">
+        <div class="cv-entry-header">
+            <span class="cv-entry-title">${e.title}${(e.tags||[]).some(t => relevantTags.has(t)) ? '<span class="cv-badge">Relevante</span>' : ''}</span>
+            <span class="cv-entry-date">${e.date}</span>
+        </div>
+        ${e.company ? `<div class="cv-entry-company">${e.company} - ${e.location}</div>` : `<div class="cv-entry-company">${e.location}</div>`}
+        <ul class="cv-roles">${e.roles.map(r => `<li>${r}</li>`).join('')}</ul>
+    </div>`).join('')}
+</div>
+
+<div class="cv-section">
+    <div class="cv-section-title">Intereses y Habilidades</div>
+    <div style="margin-bottom:6px;font-weight:bold;font-size:10pt;">Habilidades</div>
+    <div class="cv-skills-grid">
+        ${skills.map(([k,v]) => `<div class="cv-skill-item"><b>${k}:</b> ${v || '—'}</div>`).join('')}
+    </div>
+    <div style="margin-top:8px;font-weight:bold;font-size:10pt;">Intereses</div>
+    <div class="cv-interests">${interests.join(' | ')}</div>
+</div>
+
+<div class="cv-section">
+    <div class="cv-section-title">Idiomas</div>
+    ${CV_DATA.languages.map(l => `<div class="cv-languages">${l}</div>`).join('')}
+</div>
+
+</body>
+</html>`;
+
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
         }
 
         function escapeHtml(text) {
