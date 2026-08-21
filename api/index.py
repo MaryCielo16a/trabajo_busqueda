@@ -594,9 +594,10 @@ class handler(BaseHTTPRequestHandler):
                 for j in all_jobs:
                     added += save_job(j)
 
+                remote_jobs = [j for j in all_jobs if j.get("is_remote")]
                 email_sent = False
-                if all_jobs:
-                    email_sent = send_email(all_jobs)
+                if remote_jobs:
+                    email_sent = send_email(remote_jobs)
 
                 self._json_response(200, {
                     "success": True,
@@ -628,9 +629,10 @@ class handler(BaseHTTPRequestHandler):
                 for j in all_jobs:
                     added += save_job(j)
 
+                remote_jobs = [j for j in all_jobs if j.get("is_remote")]
                 email_sent = False
-                if all_jobs:
-                    email_sent = send_email(all_jobs)
+                if remote_jobs:
+                    email_sent = send_email(remote_jobs)
 
                 self._json_response(200, {
                     "success": True,
