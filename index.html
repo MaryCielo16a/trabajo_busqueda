@@ -2756,7 +2756,8 @@
             }
 
             const skipPatterns = /^(certificate|certificado|certifica|otorga|award|completion|verify|verifica|credential|issued|emitido|fecha|date|name|nombre|id:|this is to|has completed|ha completado|se certifica|se otorga|hereby|por la presente|congratulations|felicitaciones)/i;
-            const certNameKeywords = ['course', 'curso', 'program', 'programa', 'specialization', 'especializacion', 'professional', 'introduction', 'fundamentos', 'foundations', 'advanced', 'avanzado', 'basico', 'basic'];
+            const certNameRegex = /\b(course|curso|program|programa|specialization|especializacion|professional|introduction|introduccion|fundamentos|foundations|advanced|avanzado|basico|basic|development|desarrollo|analisis|analysis|machine learning|deep learning)\b/i;
+            const platformNames = ['coursera', 'udemy', 'edx', 'platzi', 'linkedin', 'google', 'microsoft', 'amazon', 'aws', 'oracle', 'cisco', 'harvard', 'mit', 'stanford', 'crehana', 'domestika', 'alura'];
 
             let bestLine = '';
             let bestScore = -1;
@@ -2769,13 +2770,14 @@
 
                 let score = 0;
                 score += Math.min(line.length / 10, 3);
-                if (certNameKeywords.some(w => lower.includes(w))) score += 4;
+                if (certNameRegex.test(line)) score += 4;
                 if (/[A-Z]/.test(line[0])) score += 1;
-                if (/[A-Z]{2,}/.test(line)) score += 1;
                 if (dates.some(d => line.includes(d))) score -= 3;
                 if (lower.includes('@') || lower.includes('.com') || lower.includes('.org')) score -= 5;
                 const wordCount = line.split(/\s+/).length;
-                if (wordCount >= 3 && wordCount <= 12) score += 2;
+                if (wordCount >= 3 && wordCount <= 12) score += 3;
+                if (wordCount === 1) score -= 2;
+                if (platformNames.some(p => lower === p)) score -= 3;
 
                 if (score > bestScore) {
                     bestScore = score;
