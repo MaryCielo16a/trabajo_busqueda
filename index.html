@@ -998,6 +998,37 @@
             color: #667eea;
             margin-top: 4px;
         }
+        .cert-line-selector {
+            margin-top: 8px;
+            text-align: left;
+        }
+        .cert-selector-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        .cert-line-option {
+            padding: 6px 10px;
+            margin: 3px 0;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+            background: white;
+            transition: all 0.15s;
+            color: #444;
+        }
+        .cert-line-option:hover {
+            background: #e8eaf6;
+            border-color: #667eea;
+        }
+        .cert-line-option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            font-weight: 600;
+        }
 
         .empty-state {
             text-align: center;
@@ -2706,32 +2737,100 @@
 
                 if (!text || text.trim().length < 5) {
                     bar.style.width = '100%';
-                    status.textContent = 'No se pudo leer texto de la imagen. Intenta con una foto mas clara o llena manualmente.';
+                    status.textContent = 'No se pudo leer texto. Intenta con una foto mas clara o llena manualmente.';
                     setTimeout(() => progress.classList.remove('active'), 5000);
                     return;
                 }
 
                 const parsed = parseCertificateText(text);
 
-                if (parsed.name) document.getElementById('pf_name').value = parsed.name;
                 if (parsed.date) document.getElementById('pf_date').value = parsed.date;
                 if (parsed.tags) document.getElementById('pf_tags').value = parsed.tags;
 
                 bar.style.width = '100%';
 
-                if (!parsed.name && !parsed.date) {
-                    const preview = text.replace(/\n/g, ' ').substring(0, 200);
-                    status.innerHTML = `No se identificaron datos claros. Texto detectado:<br><i style="font-size:11px;color:#666">"${preview}..."</i><br>Copia lo que necesites manualmente.`;
-                } else {
-                    status.textContent = 'Datos extraidos! Revisa y edita si es necesario.';
-                    setTimeout(() => progress.classList.remove('active'), 4000);
-                }
+                const rawLines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+                const selectorLines = buildSelectorLines(rawLines);
+                showCertLineSelector(selectorLines, parsed.name || '');
             } catch(e) {
                 console.error('OCR Error:', e);
                 status.textContent = 'Error: ' + e.message + '. Llena el formulario manualmente.';
                 bar.style.width = '0%';
                 setTimeout(() => progress.classList.remove('active'), 6000);
             }
+        }
+
+        function buildSelectorLines(lines) {
+            const filtered = [];
+            const skipLine = /^(certificate|certificado|certifica a|otorga|award|verify|credential|issued|emitido|fecha|this is to|has completed|ha completado|se certifica|se otorga|hereby|por la presente|por participar|congratulations|felicitaciones|aprobado|approved|certificacion de|horas de|hours of)/i;
+            const skipRole = /\b(founder|ceo|cto|coo|director|presidente|rector|decano|instructor|profesor)\b/i;
+            const skipUrl = /^https?:\/\//i;
+            const skipShort = /^[\d\s\/\-\.]+$/;
+
+            const roleLineIndexes = new Set();
+            for (let i = 0; i < lines.length; i++) {
+                if (skipRole.test(lines[i])) {
+                    roleLineIndexes.add(i);
+                    if (i > 0) roleLineIndexes.add(i - 1);
+                }
+            }
+
+            let skipNextAsName = false;
+            for (let i = 0; i < lines.length; i++) {
+                const l = lines[i];
+                if (skipLine.test(l)) {
+                    if (/certifica a|awarded to|otorgado a|granted to/i.test(l)) skipNextAsName = true;
+                    continue;
+                }
+                if (skipNextAsName) { skipNextAsName = false; continue; }
+                if (roleLineIndexes.has(i)) continue;
+                if (skipUrl.test(l)) continue;
+                if (skipShort.test(l)) continue;
+                if (/^\d+\s*(horas|hours|hrs)/i.test(l)) continue;
+
+                if (/^(curso de|course:|programa de|program:|taller de|diplomado en)\s*$/i.test(l) && i + 1 < lines.length) {
+                    filtered.push(l + ' ' + lines[i + 1]);
+                    i++;
+                    continue;
+                }
+
+                filtered.push(l);
+            }
+            return filtered;
+        }
+
+        function showCertLineSelector(lines, bestGuess) {
+            const progress = document.getElementById('certProgress');
+            const status = document.getElementById('certProgressStatus');
+            progress.classList.add('active');
+
+            let selectorHtml = '<div class="cert-line-selector">';
+            selectorHtml += '<div class="cert-selector-title">Selecciona el nombre del curso:</div>';
+
+            const uniqueLines = [...new Set(lines)];
+            for (const line of uniqueLines) {
+                const isSelected = line === bestGuess;
+                const escaped = line.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                selectorHtml += `<div class="cert-line-option ${isSelected ? 'selected' : ''}" onclick="selectCertLine(this, '${escaped}')">
+                    ${isSelected ? '✓ ' : ''}${line}
+                </div>`;
+            }
+            selectorHtml += '</div>';
+            status.innerHTML = selectorHtml;
+
+            if (bestGuess) {
+                document.getElementById('pf_name').value = bestGuess;
+            }
+        }
+
+        function selectCertLine(el, text) {
+            document.querySelectorAll('.cert-line-option').forEach(o => {
+                o.classList.remove('selected');
+                o.textContent = o.textContent.replace(/^✓ /, '');
+            });
+            el.classList.add('selected');
+            el.textContent = '✓ ' + el.textContent.trim();
+            document.getElementById('pf_name').value = text.replace(/&quot;/g, '"');
         }
 
         function parseCertificateText(text) {
