@@ -610,6 +610,251 @@
             .modal-info-grid { grid-template-columns: 1fr; }
         }
 
+        /* Mi Perfil Section */
+        .profile-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .profile-header h2 {
+            color: #333;
+            font-size: 18px;
+        }
+
+        .profile-toggle {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #667eea;
+            transition: transform 0.3s;
+        }
+
+        .profile-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .profile-content {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .profile-content.open {
+            display: block;
+        }
+
+        .profile-group {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .profile-group-header {
+            background: #f8f9ff;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .profile-group-header h3 {
+            font-size: 15px;
+            color: #333;
+        }
+
+        .profile-group-body {
+            padding: 12px 16px;
+        }
+
+        .profile-entry {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .profile-entry-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .profile-entry-sub {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .profile-entry-date {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .profile-entry-roles {
+            margin-top: 4px;
+            padding-left: 16px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .profile-entry-roles li {
+            margin-bottom: 2px;
+        }
+
+        .profile-entry-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .pe-btn {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            color: #667eea;
+        }
+
+        .pe-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .pe-btn-danger {
+            color: #e53935;
+            border-color: #e53935;
+        }
+
+        .pe-btn-danger:hover {
+            background: #e53935;
+            color: white;
+        }
+
+        .profile-form {
+            background: #f0f2ff;
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 10px;
+        }
+
+        .profile-form label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 3px;
+            margin-top: 8px;
+        }
+
+        .profile-form label:first-child {
+            margin-top: 0;
+        }
+
+        .profile-form input, .profile-form textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .profile-form textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .profile-form-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .pf-save {
+            padding: 6px 16px;
+            background: #43a047;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .pf-cancel {
+            padding: 6px 16px;
+            background: #eee;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .profile-add-btn {
+            padding: 6px 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        .profile-add-btn:hover {
+            background: #5568d3;
+        }
+
+        .profile-info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .profile-info-row input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .profile-info-row label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 3px;
+        }
+
+        .profile-saved-msg {
+            color: #43a047;
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+            margin-left: 10px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -1059,6 +1304,52 @@
                 <button onclick="addFilter()">+ Agregar</button>
             </div>
             <p class="filter-info">Click en un filtro para activar/desactivar. La X lo elimina. Estos filtros se usan en la busqueda automatica diaria.</p>
+        </div>
+
+        <!-- Mi Perfil -->
+        <div class="profile-section">
+            <div class="profile-header" onclick="toggleProfile()">
+                <h2>👤 Mi Perfil - Experiencia Laboral</h2>
+                <span class="profile-saved-msg" id="profileSavedMsg">Guardado!</span>
+                <button class="profile-toggle" id="profileToggle">▼</button>
+            </div>
+            <div class="profile-content" id="profileContent">
+                <!-- Personal Info -->
+                <div class="profile-group">
+                    <div class="profile-group-header"><h3>Informacion Personal</h3></div>
+                    <div class="profile-group-body" id="profilePersonal"></div>
+                </div>
+                <!-- Education -->
+                <div class="profile-group">
+                    <div class="profile-group-header"><h3>Formacion Academica</h3></div>
+                    <div class="profile-group-body" id="profileEducation"></div>
+                </div>
+                <!-- Certifications -->
+                <div class="profile-group">
+                    <div class="profile-group-header"><h3>Certificaciones</h3></div>
+                    <div class="profile-group-body" id="profileCertifications"></div>
+                </div>
+                <!-- Experience -->
+                <div class="profile-group">
+                    <div class="profile-group-header"><h3>Experiencia Laboral</h3></div>
+                    <div class="profile-group-body" id="profileExperience"></div>
+                </div>
+                <!-- Extracurricular -->
+                <div class="profile-group">
+                    <div class="profile-group-header"><h3>Actividades Extracurriculares</h3></div>
+                    <div class="profile-group-body" id="profileExtracurricular"></div>
+                </div>
+                <!-- Skills -->
+                <div class="profile-group">
+                    <div class="profile-group-header"><h3>Habilidades</h3></div>
+                    <div class="profile-group-body" id="profileSkills"></div>
+                </div>
+                <!-- Interests & Languages -->
+                <div class="profile-group">
+                    <div class="profile-group-header"><h3>Intereses e Idiomas</h3></div>
+                    <div class="profile-group-body" id="profileInterests"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Progress bar -->
@@ -1601,50 +1892,46 @@
 
         function generateDreamAnswers(job) {
             const container = document.getElementById('modalDreamAnswers');
+            const cvd = getCVData();
             const t = (job.title || '').toLowerCase();
             const cat = job.category || 'otro';
+            const relevantTags = getRelevantTags(job);
 
-            let profileDesc = '';
-            let whyMe = '';
-            let experience = '';
-            let skills = '';
+            const sortedExp = sortByRelevance(cvd.experience, relevantTags);
+            const sortedExtra = sortByRelevance(cvd.extracurricular, relevantTags);
+            const allExp = [...sortedExp, ...sortedExtra];
 
-            if (cat === 'data' || t.includes('data') || t.includes('analista') || t.includes('bi')) {
-                profileDesc = 'Estudiante de 8vo ciclo de Ingenieria de Sistemas en la UPC con experiencia practica en Data Intelligence en B. Braun Medical Peru, donde diseñe dashboards en Power BI, administre datos en Salesforce y automatice flujos con Power Automate.';
-                whyMe = 'Cuento con experiencia directa en analisis de datos y business intelligence. En B. Braun Medical logre una mejora del 60% en visibilidad de KPIs y optimize la toma de decisiones en un 70% mediante reportes personalizados en Salesforce. Manejo Power BI a nivel intermedio-avanzado y Excel avanzado.';
-                experience = 'Practicante de Data Intelligence en B. Braun Medical Peru (Oct 2025 - Mar 2026): dashboards Power BI, reportes Salesforce, automatizacion con Power Automate. Voluntaria en ENTRECONDUCTAS: analisis de datos educativos y dashboards Power BI.';
-                skills = 'Power BI (intermedio-avanzado), Excel (avanzado), SQL, Power Automate, SAP, Python para Data Science (certificacion IBM).';
-            } else if (cat === 'frontend' || t.includes('frontend') || t.includes('react') || t.includes('web')) {
-                profileDesc = 'Estudiante de 8vo ciclo de Ingenieria de Sistemas en la UPC con experiencia en desarrollo web. Desarrolle la pagina web de AESI como voluntaria y colabore en proyectos full stack. Ganadora de beca Mujeres en Ciencia de PRONABEC.';
-                whyMe = 'Tengo experiencia practica en desarrollo web, habiendo creado la primera version de la pagina web de AESI. Ademas, colabore en desarrollo backend con Spring Boot, lo que me da vision completa del stack. Soy proactiva, organizada y trabajo bien en equipo usando Scrum.';
-                experience = 'Voluntaria de tecnologia en AESI (Ene-Mar 2025): desarrollo de pagina web. Colaboradora en Influyo Corp (Feb-Ago 2025): desarrollo backend con Spring Boot y Java, resolucion de 30+ bugs.';
-                skills = 'HTML, CSS, JavaScript, UX, Java, Spring Boot, PostgreSQL, SQL, Git, metodologia Scrum.';
-            } else if (cat === 'backend' || t.includes('backend') || t.includes('java') || t.includes('python') || t.includes('spring')) {
-                profileDesc = 'Estudiante de 8vo ciclo de Ingenieria de Sistemas en la UPC con experiencia en desarrollo backend con Spring Boot y Java en Influyo Corp, donde identifique y solucione mas de 30 bugs criticos e implemente servicios escalables.';
-                whyMe = 'Tengo experiencia directa en desarrollo backend con Spring Boot y Java. En Influyo Corp trabaje 6 meses implementando servicios escalables, resolviendo bugs criticos y participando en sprints Scrum. Tambien manejo PostgreSQL, SQL y tengo certificaciones en Python.';
-                experience = 'Colaborador en Influyo Corp (Feb-Ago 2025): servicios backend con Spring Boot y Java, 30+ bugs resueltos, metodologia Scrum. Practicante en Total Weight & Systems: mantenimiento de base de datos, desarrollo de funcionalidad de seguimiento en tiempo real.';
-                skills = 'Java, Spring Boot, PostgreSQL, SQL, Python, Git, Scrum, Power Automate.';
-            } else {
-                profileDesc = 'Estudiante de 8vo ciclo de Ingenieria de Sistemas de Informacion en la UPC con experiencia en practicas de ingenieria de sistemas, data intelligence y desarrollo de software. Ganadora de beca Mujeres en Ciencia de PRONABEC.';
-                whyMe = 'Soy una profesional en formacion con experiencia diversa: data intelligence en B. Braun Medical, desarrollo backend en Influyo Corp, y gestion de sistemas en Total Weight & Systems. Me adapto rapidamente y busco aprender continuamente.';
-                experience = 'Practicante Data Intelligence en B. Braun Medical (Oct 2025 - Mar 2026). Colaboradora Backend en Influyo Corp (Feb-Ago 2025). Practicante de Sistemas en Total Weight & Systems (Ene-Abr 2025). Voluntaria tecnologica en ENTRECONDUCTAS y AESI.';
-                skills = 'Java, Spring Boot, Power BI, Excel, SQL, PostgreSQL, Python, Power Automate, SAP, Scrum, UX.';
-            }
+            const eduMain = cvd.education[0] || {};
+            const eduText = eduMain.detail ? eduMain.detail.split('|')[0].trim() : 'Ingenieria de Sistemas';
+            const eduInst = eduMain.title || 'universidad';
+
+            const topExp = allExp.slice(0, 2);
+            const profileDesc = `${eduText} en ${eduInst}` +
+                (topExp.length ? '. Experiencia en: ' + topExp.map(e => `${e.title} en ${e.company || e.location}`).join('; ') + '.' : '.');
+
+            const expLines = sortedExp.map(e => `${e.title} en ${e.company} (${e.date}): ${(e.roles||[]).slice(0,2).join('. ')}`);
+            const extraLines = sortedExtra.filter(e => (e.tags||[]).some(t => relevantTags.has(t))).map(e => `${e.title} (${e.date}): ${(e.roles||[]).slice(0,1).join('. ')}`);
+            const experienceText = [...expLines, ...extraLines].join('. ') || 'Ver mi CV adjunto para detalles de mi experiencia.';
+
+            const topRoles = sortedExp.flatMap(e => (e.roles||[]).slice(0,1));
+            const whyMe = topRoles.length ? topRoles.join('. ') + '. Me adapto rapidamente y busco aprender continuamente.' : 'Soy una profesional en formacion con ganas de aprender y aportar valor al equipo.';
+
+            const skillsList = Object.entries(cvd.skills).map(([k,v]) => v ? `${k} (${v})` : k).join(', ');
 
             const questions = [
                 { q: 'Cuentanos sobre ti / Perfil profesional', a: profileDesc },
                 { q: 'Por que deberiamos contratarte?', a: whyMe },
-                { q: 'Describe tu experiencia relevante', a: experience },
-                { q: 'Cuales son tus principales habilidades?', a: skills },
-                { q: 'Por que te interesa este puesto?', a: `Me interesa esta posicion de "${job.title}" porque se alinea con mi formacion en Ingenieria de Sistemas y mi experiencia practica. Busco una oportunidad donde pueda aplicar mis conocimientos y seguir creciendo profesionalmente en un equipo colaborativo.` },
-                { q: 'Cual es tu disponibilidad?', a: 'Tengo disponibilidad inmediata. Puedo trabajar de forma remota o presencial segun se requiera. Actualmente curso el 8vo ciclo de Ingenieria de Sistemas en la UPC y puedo coordinar horarios compatibles.' },
+                { q: 'Describe tu experiencia relevante', a: experienceText },
+                { q: 'Cuales son tus principales habilidades?', a: skillsList || 'Ver mi CV adjunto.' },
+                { q: 'Por que te interesa este puesto?', a: `Me interesa esta posicion de "${job.title}" porque se alinea con mi formacion en ${eduText} y mi experiencia practica. Busco una oportunidad donde pueda aplicar mis conocimientos y seguir creciendo profesionalmente en un equipo colaborativo.` },
+                { q: 'Cual es tu disponibilidad?', a: `Tengo disponibilidad inmediata. Puedo trabajar de forma remota o presencial segun se requiera. Actualmente curso ${eduText} en ${eduInst} y puedo coordinar horarios compatibles.` },
                 { q: 'Cuales son tus pretensiones salariales?', a: 'Estoy abierta a negociar segun el rango que manejen para esta posicion. Mi prioridad es encontrar una oportunidad donde pueda crecer profesionalmente y aportar valor.' }
             ];
 
             container.innerHTML = `
                 <div class="dream-answers">
                     <h4>🤖 Dream - Respuestas sugeridas para la postulacion</h4>
-                    <p style="font-size:12px;color:#666;margin-bottom:12px;">Estas respuestas estan basadas en tu experiencia. Copialas y pegalas en el formulario de postulacion.</p>
+                    <p style="font-size:12px;color:#666;margin-bottom:12px;">Estas respuestas se generan de tu perfil. Copialas y pegalas en el formulario de postulacion. Actualiza tu perfil para mejorar las respuestas.</p>
                     ${questions.map((q, i) => `
                         <div class="dream-answer-item">
                             <button class="copy-btn" onclick="copyAnswer(${i})">📋 Copiar</button>
@@ -1673,8 +1960,8 @@
             if (e.key === 'Escape') closeModal();
         });
 
-        // ---- CV GENERATOR ----
-        const CV_DATA = {
+        // ---- PROFILE / CV DATA ----
+        const CV_DATA_DEFAULT = {
             name: "Ana Maria Tapia Hurtado",
             email: "anamariatapiahurtado3@gmail.com",
             phone: "+51 918653701",
@@ -1785,6 +2072,398 @@
             languages: ["Ingles intermedio", "Espanol Nativo"]
         };
 
+        function getCVData() {
+            try {
+                const stored = localStorage.getItem('cv_profile');
+                if (stored) return JSON.parse(stored);
+            } catch(e) {}
+            return JSON.parse(JSON.stringify(CV_DATA_DEFAULT));
+        }
+
+        function saveCVData(data) {
+            localStorage.setItem('cv_profile', JSON.stringify(data));
+            const msg = document.getElementById('profileSavedMsg');
+            msg.style.display = 'inline';
+            setTimeout(() => msg.style.display = 'none', 2000);
+        }
+
+        function toggleProfile() {
+            const c = document.getElementById('profileContent');
+            const t = document.getElementById('profileToggle');
+            c.classList.toggle('open');
+            t.classList.toggle('open');
+            if (c.classList.contains('open')) renderProfile();
+        }
+
+        function renderProfile() {
+            const data = getCVData();
+            renderPersonalInfo(data);
+            renderProfileEducation(data);
+            renderProfileCerts(data);
+            renderProfileExperience(data);
+            renderProfileExtracurricular(data);
+            renderProfileSkills(data);
+            renderProfileInterests(data);
+        }
+
+        function renderPersonalInfo(data) {
+            const el = document.getElementById('profilePersonal');
+            el.innerHTML = `
+                <div class="profile-info-row">
+                    <div><label>Nombre</label><input id="pi_name" value="${escapeHtml(data.name)}" onchange="updatePersonal()"></div>
+                    <div><label>Email</label><input id="pi_email" value="${escapeHtml(data.email)}" onchange="updatePersonal()"></div>
+                </div>
+                <div class="profile-info-row">
+                    <div><label>Telefono</label><input id="pi_phone" value="${escapeHtml(data.phone)}" onchange="updatePersonal()"></div>
+                    <div><label>LinkedIn</label><input id="pi_linkedin" value="${escapeHtml(data.linkedin)}" onchange="updatePersonal()"></div>
+                </div>
+            `;
+        }
+
+        function updatePersonal() {
+            const data = getCVData();
+            data.name = document.getElementById('pi_name').value;
+            data.email = document.getElementById('pi_email').value;
+            data.phone = document.getElementById('pi_phone').value;
+            data.linkedin = document.getElementById('pi_linkedin').value;
+            saveCVData(data);
+        }
+
+        function renderListSection(containerId, items, renderItem, addForm, sectionKey) {
+            const el = document.getElementById(containerId);
+            let html = items.map((item, i) => renderItem(item, i, sectionKey)).join('');
+            html += `<button class="profile-add-btn" onclick="showAddForm_${sectionKey}()">+ Agregar</button>`;
+            html += `<div id="addForm_${sectionKey}" style="display:none"></div>`;
+            el.innerHTML = html;
+        }
+
+        function renderProfileEducation(data) {
+            renderListSection('profileEducation', data.education, (item, i) => `
+                <div class="profile-entry">
+                    <div class="profile-entry-actions">
+                        <button class="pe-btn" onclick="editEducation(${i})">Editar</button>
+                        <button class="pe-btn pe-btn-danger" onclick="deleteEntry('education',${i})">X</button>
+                    </div>
+                    <div class="profile-entry-title">${escapeHtml(item.title)}</div>
+                    <div class="profile-entry-sub">${escapeHtml(item.location || '')} ${item.detail ? '| ' + escapeHtml(item.detail) : ''}</div>
+                    <div class="profile-entry-date">${escapeHtml(item.date)}</div>
+                </div>
+            `, null, 'education');
+        }
+
+        function renderProfileCerts(data) {
+            renderListSection('profileCertifications', data.certifications, (item, i) => `
+                <div class="profile-entry">
+                    <div class="profile-entry-actions">
+                        <button class="pe-btn" onclick="editCert(${i})">Editar</button>
+                        <button class="pe-btn pe-btn-danger" onclick="deleteEntry('certifications',${i})">X</button>
+                    </div>
+                    <div class="profile-entry-title">${escapeHtml(item.name)}</div>
+                    <div class="profile-entry-date">${escapeHtml(item.date)}</div>
+                </div>
+            `, null, 'certifications');
+        }
+
+        function renderProfileExperience(data) {
+            renderListSection('profileExperience', data.experience, (item, i) => `
+                <div class="profile-entry">
+                    <div class="profile-entry-actions">
+                        <button class="pe-btn" onclick="editExperience(${i})">Editar</button>
+                        <button class="pe-btn pe-btn-danger" onclick="deleteEntry('experience',${i})">X</button>
+                    </div>
+                    <div class="profile-entry-title">${escapeHtml(item.title)}</div>
+                    <div class="profile-entry-sub">${escapeHtml(item.company)} - ${escapeHtml(item.location)}</div>
+                    <div class="profile-entry-date">${escapeHtml(item.date)}</div>
+                    <ul class="profile-entry-roles">${(item.roles||[]).map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
+                </div>
+            `, null, 'experience');
+        }
+
+        function renderProfileExtracurricular(data) {
+            renderListSection('profileExtracurricular', data.extracurricular, (item, i) => `
+                <div class="profile-entry">
+                    <div class="profile-entry-actions">
+                        <button class="pe-btn" onclick="editExtra(${i})">Editar</button>
+                        <button class="pe-btn pe-btn-danger" onclick="deleteEntry('extracurricular',${i})">X</button>
+                    </div>
+                    <div class="profile-entry-title">${escapeHtml(item.title)}</div>
+                    <div class="profile-entry-sub">${item.company ? escapeHtml(item.company) + ' - ' : ''}${escapeHtml(item.location)}</div>
+                    <div class="profile-entry-date">${escapeHtml(item.date)}</div>
+                    <ul class="profile-entry-roles">${(item.roles||[]).map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
+                </div>
+            `, null, 'extracurricular');
+        }
+
+        function renderProfileSkills(data) {
+            const el = document.getElementById('profileSkills');
+            let html = Object.entries(data.skills).map(([k,v], i) => `
+                <div class="profile-entry" style="padding:8px 12px;margin-bottom:4px;">
+                    <div class="profile-entry-actions">
+                        <button class="pe-btn" onclick="editSkill('${escapeHtml(k)}')">Editar</button>
+                        <button class="pe-btn pe-btn-danger" onclick="deleteSkill('${escapeHtml(k)}')">X</button>
+                    </div>
+                    <span class="profile-entry-title" style="font-size:13px">${escapeHtml(k)}:</span>
+                    <span style="font-size:13px;color:#555">${escapeHtml(v || '—')}</span>
+                </div>
+            `).join('');
+            html += `<button class="profile-add-btn" onclick="showAddSkillForm()">+ Agregar habilidad</button>`;
+            html += `<div id="addForm_skills" style="display:none"></div>`;
+            el.innerHTML = html;
+        }
+
+        function renderProfileInterests(data) {
+            const el = document.getElementById('profileInterests');
+            el.innerHTML = `
+                <label style="font-size:12px;font-weight:600;color:#555;">Intereses (separados por coma)</label>
+                <input id="pi_interests" value="${escapeHtml((data.interests||[]).join(', '))}" onchange="updateInterests()" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;margin-bottom:10px;">
+                <label style="font-size:12px;font-weight:600;color:#555;">Idiomas (separados por coma)</label>
+                <input id="pi_languages" value="${escapeHtml((data.languages||[]).join(', '))}" onchange="updateLanguages()" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;">
+            `;
+        }
+
+        function updateInterests() {
+            const data = getCVData();
+            data.interests = document.getElementById('pi_interests').value.split(',').map(s => s.trim()).filter(Boolean);
+            saveCVData(data);
+        }
+
+        function updateLanguages() {
+            const data = getCVData();
+            data.languages = document.getElementById('pi_languages').value.split(',').map(s => s.trim()).filter(Boolean);
+            saveCVData(data);
+        }
+
+        function deleteEntry(section, idx) {
+            if (!confirm('Eliminar esta entrada?')) return;
+            const data = getCVData();
+            data[section].splice(idx, 1);
+            saveCVData(data);
+            renderProfile();
+        }
+
+        function deleteSkill(key) {
+            if (!confirm('Eliminar "' + key + '"?')) return;
+            const data = getCVData();
+            delete data.skills[key];
+            saveCVData(data);
+            renderProfile();
+        }
+
+        // Generic form helpers
+        function showEntryForm(containerId, fields, onSave) {
+            const el = document.getElementById(containerId);
+            el.style.display = 'block';
+            el.innerHTML = `<div class="profile-form">
+                ${fields.map(f => `
+                    <label>${f.label}</label>
+                    ${f.type === 'textarea' ? `<textarea id="pf_${f.key}" placeholder="${f.placeholder || ''}">${f.value || ''}</textarea>` : `<input id="pf_${f.key}" value="${escapeHtml(f.value || '')}" placeholder="${f.placeholder || ''}">`}
+                `).join('')}
+                <div class="profile-form-actions">
+                    <button class="pf-save" onclick="(${onSave})()">Guardar</button>
+                    <button class="pf-cancel" onclick="document.getElementById('${containerId}').style.display='none'">Cancelar</button>
+                </div>
+            </div>`;
+        }
+
+        // Education CRUD
+        window.showAddForm_education = function() {
+            showEntryForm('addForm_education', [
+                {key:'title', label:'Titulo / Institucion', placeholder:'Ej: Universidad...'},
+                {key:'location', label:'Ubicacion', placeholder:'Lima, PE'},
+                {key:'detail', label:'Detalle', placeholder:'Carrera, facultad...'},
+                {key:'date', label:'Periodo', placeholder:'Agosto 2021 – Actualidad'}
+            ], function save(){
+                const data = getCVData();
+                data.education.push({
+                    title: document.getElementById('pf_title').value,
+                    location: document.getElementById('pf_location').value,
+                    detail: document.getElementById('pf_detail').value,
+                    date: document.getElementById('pf_date').value
+                });
+                saveCVData(data); renderProfile();
+            });
+        };
+
+        window.editEducation = function(idx) {
+            const data = getCVData();
+            const item = data.education[idx];
+            showEntryForm('addForm_education', [
+                {key:'title', label:'Titulo / Institucion', value: item.title},
+                {key:'location', label:'Ubicacion', value: item.location},
+                {key:'detail', label:'Detalle', value: item.detail},
+                {key:'date', label:'Periodo', value: item.date}
+            ], function save(){
+                const d = getCVData();
+                d.education[idx] = {
+                    title: document.getElementById('pf_title').value,
+                    location: document.getElementById('pf_location').value,
+                    detail: document.getElementById('pf_detail').value,
+                    date: document.getElementById('pf_date').value
+                };
+                saveCVData(d); renderProfile();
+            });
+        };
+
+        // Certification CRUD
+        window.showAddForm_certifications = function() {
+            showEntryForm('addForm_certifications', [
+                {key:'name', label:'Nombre del curso', placeholder:'Ej: Python for Data Science'},
+                {key:'date', label:'Periodo', placeholder:'Marzo 2024 – Abril 2024'},
+                {key:'tags', label:'Tags (data, frontend, backend, python, etc.)', placeholder:'data, python'}
+            ], function save(){
+                const data = getCVData();
+                data.certifications.push({
+                    name: document.getElementById('pf_name').value,
+                    date: document.getElementById('pf_date').value,
+                    tags: document.getElementById('pf_tags').value.split(',').map(s=>s.trim()).filter(Boolean)
+                });
+                saveCVData(data); renderProfile();
+            });
+        };
+
+        window.editCert = function(idx) {
+            const data = getCVData();
+            const item = data.certifications[idx];
+            showEntryForm('addForm_certifications', [
+                {key:'name', label:'Nombre del curso', value: item.name},
+                {key:'date', label:'Periodo', value: item.date},
+                {key:'tags', label:'Tags', value: (item.tags||[]).join(', ')}
+            ], function save(){
+                const d = getCVData();
+                d.certifications[idx] = {
+                    name: document.getElementById('pf_name').value,
+                    date: document.getElementById('pf_date').value,
+                    tags: document.getElementById('pf_tags').value.split(',').map(s=>s.trim()).filter(Boolean)
+                };
+                saveCVData(d); renderProfile();
+            });
+        };
+
+        // Experience CRUD
+        window.showAddForm_experience = function() {
+            showEntryForm('addForm_experience', [
+                {key:'title', label:'Cargo', placeholder:'Ej: Practicante de Data Intelligence'},
+                {key:'company', label:'Empresa', placeholder:'Ej: B. Braun Medical Peru'},
+                {key:'location', label:'Ubicacion', placeholder:'Lima, PE'},
+                {key:'date', label:'Periodo', placeholder:'Octubre 2025 – Marzo 2026'},
+                {key:'roles', label:'Logros (uno por linea)', type:'textarea', placeholder:'Disene dashboards en Power BI...\nAdministre datos en Salesforce...'},
+                {key:'tags', label:'Tags (data, backend, frontend, etc.)', placeholder:'data, bi, analytics'}
+            ], function save(){
+                const data = getCVData();
+                data.experience.push({
+                    title: document.getElementById('pf_title').value,
+                    company: document.getElementById('pf_company').value,
+                    location: document.getElementById('pf_location').value,
+                    date: document.getElementById('pf_date').value,
+                    roles: document.getElementById('pf_roles').value.split('\n').map(s=>s.trim()).filter(Boolean),
+                    tags: document.getElementById('pf_tags').value.split(',').map(s=>s.trim()).filter(Boolean)
+                });
+                saveCVData(data); renderProfile();
+            });
+        };
+
+        window.editExperience = function(idx) {
+            const data = getCVData();
+            const item = data.experience[idx];
+            showEntryForm('addForm_experience', [
+                {key:'title', label:'Cargo', value: item.title},
+                {key:'company', label:'Empresa', value: item.company},
+                {key:'location', label:'Ubicacion', value: item.location},
+                {key:'date', label:'Periodo', value: item.date},
+                {key:'roles', label:'Logros (uno por linea)', type:'textarea', value: (item.roles||[]).join('\n')},
+                {key:'tags', label:'Tags', value: (item.tags||[]).join(', ')}
+            ], function save(){
+                const d = getCVData();
+                d.experience[idx] = {
+                    title: document.getElementById('pf_title').value,
+                    company: document.getElementById('pf_company').value,
+                    location: document.getElementById('pf_location').value,
+                    date: document.getElementById('pf_date').value,
+                    roles: document.getElementById('pf_roles').value.split('\n').map(s=>s.trim()).filter(Boolean),
+                    tags: document.getElementById('pf_tags').value.split(',').map(s=>s.trim()).filter(Boolean)
+                };
+                saveCVData(d); renderProfile();
+            });
+        };
+
+        // Extracurricular CRUD
+        window.showAddForm_extracurricular = function() {
+            showEntryForm('addForm_extracurricular', [
+                {key:'title', label:'Actividad', placeholder:'Ej: Voluntaria Educativa...'},
+                {key:'company', label:'Organizacion (opcional)', placeholder:''},
+                {key:'location', label:'Ubicacion', placeholder:'Lima, PE'},
+                {key:'date', label:'Periodo', placeholder:'Enero 2025 – Marzo 2025'},
+                {key:'roles', label:'Logros (uno por linea)', type:'textarea', placeholder:'Desarrollo de pagina web...\nAnalisis de datos...'},
+                {key:'tags', label:'Tags', placeholder:'frontend, web, data'}
+            ], function save(){
+                const data = getCVData();
+                data.extracurricular.push({
+                    title: document.getElementById('pf_title').value,
+                    company: document.getElementById('pf_company').value,
+                    location: document.getElementById('pf_location').value,
+                    date: document.getElementById('pf_date').value,
+                    roles: document.getElementById('pf_roles').value.split('\n').map(s=>s.trim()).filter(Boolean),
+                    tags: document.getElementById('pf_tags').value.split(',').map(s=>s.trim()).filter(Boolean)
+                });
+                saveCVData(data); renderProfile();
+            });
+        };
+
+        window.editExtra = function(idx) {
+            const data = getCVData();
+            const item = data.extracurricular[idx];
+            showEntryForm('addForm_extracurricular', [
+                {key:'title', label:'Actividad', value: item.title},
+                {key:'company', label:'Organizacion', value: item.company || ''},
+                {key:'location', label:'Ubicacion', value: item.location},
+                {key:'date', label:'Periodo', value: item.date},
+                {key:'roles', label:'Logros (uno por linea)', type:'textarea', value: (item.roles||[]).join('\n')},
+                {key:'tags', label:'Tags', value: (item.tags||[]).join(', ')}
+            ], function save(){
+                const d = getCVData();
+                d.extracurricular[idx] = {
+                    title: document.getElementById('pf_title').value,
+                    company: document.getElementById('pf_company').value,
+                    location: document.getElementById('pf_location').value,
+                    date: document.getElementById('pf_date').value,
+                    roles: document.getElementById('pf_roles').value.split('\n').map(s=>s.trim()).filter(Boolean),
+                    tags: document.getElementById('pf_tags').value.split(',').map(s=>s.trim()).filter(Boolean)
+                };
+                saveCVData(d); renderProfile();
+            });
+        };
+
+        // Skills CRUD
+        window.showAddSkillForm = function() {
+            showEntryForm('addForm_skills', [
+                {key:'skill_name', label:'Habilidad', placeholder:'Ej: Power BI'},
+                {key:'skill_level', label:'Nivel', placeholder:'Ej: Intermedio - Avanzado'}
+            ], function save(){
+                const data = getCVData();
+                const name = document.getElementById('pf_skill_name').value.trim();
+                if (name) {
+                    data.skills[name] = document.getElementById('pf_skill_level').value.trim();
+                    saveCVData(data); renderProfile();
+                }
+            });
+        };
+
+        window.editSkill = function(key) {
+            const data = getCVData();
+            showEntryForm('addForm_skills', [
+                {key:'skill_name', label:'Habilidad', value: key},
+                {key:'skill_level', label:'Nivel', value: data.skills[key] || ''}
+            ], function save(){
+                const d = getCVData();
+                const newName = document.getElementById('pf_skill_name').value.trim();
+                const newLevel = document.getElementById('pf_skill_level').value.trim();
+                if (newName !== key) delete d.skills[key];
+                if (newName) d.skills[newName] = newLevel;
+                saveCVData(d); renderProfile();
+            });
+        };
+
+        // ---- CV GENERATOR ----
         function getJobProfileTitle(job) {
             const t = (job.title || '').toLowerCase();
             if (t.includes('data') || t.includes('datos') || t.includes('analista') || t.includes('bi')) return 'Analista de Datos e Inteligencia de Negocios';
@@ -1824,7 +2503,7 @@
         function getRelevantSkills(job) {
             const cat = job.category || 'otro';
             const t = (job.title || '').toLowerCase();
-            const all = Object.entries(CV_DATA.skills);
+            const all = Object.entries(getCVData().skills);
             const priority = [];
             const rest = [];
 
@@ -1846,7 +2525,7 @@
 
         function getRelevantInterests(job) {
             const cat = job.category || 'otro';
-            const ordered = [...CV_DATA.interests];
+            const ordered = [...getCVData().interests];
             if (cat === 'data') {
                 const idx = ordered.findIndex(i => i.toLowerCase().includes('datos'));
                 if (idx > 0) { const item = ordered.splice(idx, 1)[0]; ordered.unshift(item); }
@@ -1863,11 +2542,12 @@
             const job = jobs.find(j => j.id === jobId);
             if (!job) { alert('Oferta no encontrada'); return; }
 
+            const cvd = getCVData();
             const profileTitle = getJobProfileTitle(job);
             const relevantTags = getRelevantTags(job);
-            const sortedCerts = sortByRelevance(CV_DATA.certifications, relevantTags);
-            const sortedExp = sortByRelevance(CV_DATA.experience, relevantTags);
-            const sortedExtra = sortByRelevance(CV_DATA.extracurricular, relevantTags);
+            const sortedCerts = sortByRelevance(cvd.certifications, relevantTags);
+            const sortedExp = sortByRelevance(cvd.experience, relevantTags);
+            const sortedExtra = sortByRelevance(cvd.extracurricular, relevantTags);
             const skills = getRelevantSkills(job);
             const interests = getRelevantInterests(job);
 
@@ -1875,7 +2555,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>CV - ${CV_DATA.name} - ${escapeHtml(job.title)}</title>
+<title>CV - ${cvd.name} - ${escapeHtml(job.title)}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1916,13 +2596,13 @@ body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; col
     <p>CV adaptado para: <b>${escapeHtml(job.title)}</b> en <b>${escapeHtml(job.company || 'Empresa')}</b></p>
 </div>
 
-<div class="cv-name">${CV_DATA.name}</div>
+<div class="cv-name">${cvd.name}</div>
 <div class="cv-title">${profileTitle}</div>
-<div class="cv-contact">${CV_DATA.email} | ${CV_DATA.phone} | ${CV_DATA.linkedin}</div>
+<div class="cv-contact">${cvd.email} | ${cvd.phone} | ${cvd.linkedin}</div>
 
 <div class="cv-section">
     <div class="cv-section-title">Formacion Academica y Certificaciones</div>
-    ${CV_DATA.education.map(e => `
+    ${cvd.education.map(e => `
     <div class="cv-entry">
         <div class="cv-entry-header">
             <span class="cv-entry-title">${e.title}${e.location ? ', ' + e.location : ''}</span>
@@ -1981,7 +2661,7 @@ body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; col
 
 <div class="cv-section">
     <div class="cv-section-title">Idiomas</div>
-    ${CV_DATA.languages.map(l => `<div class="cv-languages">${l}</div>`).join('')}
+    ${cvd.languages.map(l => `<div class="cv-languages">${l}</div>`).join('')}
 </div>
 
 </body>
