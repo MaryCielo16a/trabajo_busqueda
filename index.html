@@ -2623,7 +2623,9 @@
             try {
                 let text = '';
 
-                if (file.type === 'application/pdf') {
+                const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+                if (isPDF) {
                     status.textContent = 'Leyendo PDF...';
                     bar.style.width = '20%';
 
@@ -2634,7 +2636,7 @@
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
                     status.textContent = 'Procesando PDF...';
-                    bar.style.width = '40%';
+                    bar.style.width = '30%';
 
                     const arrayBuf = await file.arrayBuffer();
                     const pdf = await pdfjsLib.getDocument({data: arrayBuf}).promise;
@@ -2643,6 +2645,35 @@
                         const page = await pdf.getPage(i);
                         const content = await page.getTextContent();
                         text += content.items.map(item => item.str).join(' ') + '\n';
+                    }
+
+                    if (!text || text.trim().length < 10) {
+                        status.textContent = 'PDF sin texto, aplicando OCR a la imagen...';
+                        bar.style.width = '40%';
+
+                        if (typeof Tesseract === 'undefined') {
+                            await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+                        }
+
+                        const page = await pdf.getPage(1);
+                        const viewport = page.getViewport({scale: 2.0});
+                        const canvas = document.createElement('canvas');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+                        const ctx = canvas.getContext('2d');
+                        await page.render({canvasContext: ctx, viewport: viewport}).promise;
+
+                        status.textContent = 'Analizando imagen del PDF (puede tomar unos segundos)...';
+                        bar.style.width = '50%';
+
+                        const result = await Tesseract.recognize(canvas, 'spa+eng', {
+                            logger: m => {
+                                if (m.status === 'recognizing text') {
+                                    bar.style.width = (50 + m.progress * 30) + '%';
+                                }
+                            }
+                        });
+                        text = result.data.text;
                     }
                     bar.style.width = '80%';
                 } else {
