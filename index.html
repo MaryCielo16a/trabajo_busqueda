@@ -443,19 +443,27 @@
             font-weight: 600;
             margin-right: 4px;
         }
-        .btn-hide {
+        .btn-dismiss {
+            position: absolute;
+            top: 8px;
+            right: 8px;
             background: none;
-            color: #999;
-            border: 1px solid #ddd;
-            padding: 6px 12px;
-            border-radius: 6px;
+            border: none;
+            color: #bbb;
+            font-size: 18px;
             cursor: pointer;
-            font-size: 11px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 1;
         }
-        .btn-hide:hover {
+        .btn-dismiss:hover {
             background: #fee;
             color: #c62828;
-            border-color: #c62828;
         }
         .job-hidden {
             opacity: 0.5;
@@ -1802,7 +1810,8 @@
                 const relLabel = relevance >= 5 ? '<span class="relevance-high">★ Alta relevancia</span>' :
                                  relevance >= 2 ? '<span class="relevance-mid">● Relevante</span>' : '';
                 return `
-                <div class="job-card ${applied ? 'job-applied' : ''} ${hidden ? 'job-hidden' : ''}">
+                <div class="job-card ${applied ? 'job-applied' : ''} ${hidden ? 'job-hidden' : ''}" style="position:relative">
+                    ${!applied ? `<button class="btn-dismiss" onclick="event.stopPropagation(); hideJob('${job.id}')" title="No me interesa">✕</button>` : ''}
                     <div class="job-card-header">
                         <div class="job-title">${applied ? '✅ ' : ''}${escapeHtml(job.title || '')}</div>
                         <div>
@@ -1829,7 +1838,6 @@
                         <button class="btn-cv" onclick="event.stopPropagation(); generateCV('${job.id}')">📄 Generar CV</button>
                         <button class="btn-apply" onclick="event.stopPropagation(); openJobDetail('${job.id}', true)">🚀 Postular</button>
                         <button class="${applied ? 'btn-unapply' : 'btn-mark-applied'}" onclick="event.stopPropagation(); markAsApplied('${job.id}')">${applied ? '↩ Desmarcar' : '✅ Marcar postulado'}</button>
-                        ${!applied ? `<button class="btn-hide" onclick="event.stopPropagation(); hideJob('${job.id}')">✕ No me interesa</button>` : ''}
                     </div>
                 </div>`;
             }).join('');
