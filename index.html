@@ -1400,6 +1400,8 @@
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -2622,14 +2624,16 @@
                 let text = '';
 
                 if (file.type === 'application/pdf') {
-                    status.textContent = 'Cargando lector PDF...';
-                    bar.style.width = '20%';
-                    if (!pdfjsLoaded) {
-                        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-                        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                        pdfjsLoaded = true;
-                    }
                     status.textContent = 'Leyendo PDF...';
+                    bar.style.width = '20%';
+
+                    if (typeof pdfjsLib === 'undefined') {
+                        status.textContent = 'Cargando lector PDF...';
+                        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+                    }
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                    status.textContent = 'Procesando PDF...';
                     bar.style.width = '40%';
 
                     const arrayBuf = await file.arrayBuffer();
@@ -2642,12 +2646,14 @@
                     }
                     bar.style.width = '80%';
                 } else {
-                    status.textContent = 'Cargando motor OCR...';
+                    status.textContent = 'Preparando OCR...';
                     bar.style.width = '20%';
-                    if (!tesseractLoaded) {
+
+                    if (typeof Tesseract === 'undefined') {
+                        status.textContent = 'Cargando motor OCR...';
                         await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-                        tesseractLoaded = true;
                     }
+
                     status.textContent = 'Analizando imagen (puede tomar unos segundos)...';
                     bar.style.width = '40%';
 
@@ -2675,9 +2681,10 @@
                 status.textContent = 'Datos extraidos. Revisa y edita si es necesario.';
                 setTimeout(() => progress.classList.remove('active'), 3000);
             } catch(e) {
+                console.error('OCR Error:', e);
                 status.textContent = 'Error: ' + e.message + '. Llena el formulario manualmente.';
                 bar.style.width = '0%';
-                setTimeout(() => progress.classList.remove('active'), 4000);
+                setTimeout(() => progress.classList.remove('active'), 6000);
             }
         }
 
