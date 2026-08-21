@@ -261,6 +261,57 @@
             color: #0a66c2;
         }
 
+        .source-empleosperu {
+            background: #fce4ec;
+            color: #c62828;
+        }
+
+        .source-opcionempleo {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .source-jobsfirst {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .category-btn {
+            padding: 6px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #555;
+        }
+
+        .category-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .category-count {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-left: 4px;
+        }
+
         .job-company {
             color: #666;
             font-size: 14px;
@@ -565,11 +616,24 @@
                 <h3>LinkedIn</h3>
                 <div class="number" id="statLinkedin">0</div>
             </div>
+            <div class="stat-card">
+                <h3>Empleos Peru</h3>
+                <div class="number" id="statEmpleosperu">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Opcionempleo</h3>
+                <div class="number" id="statOpcionempleo">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Jobs First</h3>
+                <div class="number" id="statJobsfirst">0</div>
+            </div>
         </div>
 
         <!-- Jobs -->
         <div class="jobs-container">
             <h2>💼 Ofertas disponibles</h2>
+            <div class="category-filter" id="categoryFilter"></div>
             <div class="jobs-list" id="jobsList">
                 <div class="loading">
                     <div class="spinner"></div>
@@ -599,6 +663,21 @@
             return existing;
         }
 
+        let activeCategory = 'all';
+
+        const CATEGORY_LABELS = {
+            all: 'Todas',
+            frontend: 'Frontend',
+            backend: 'Backend',
+            fullstack: 'Full Stack',
+            data: 'Data / Analista',
+            mobile: 'Mobile',
+            devops: 'DevOps / Cloud',
+            qa: 'QA / Testing',
+            soporte: 'Soporte',
+            otro: 'Otros'
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             loadFilters();
             renderJobs();
@@ -607,12 +686,41 @@
 
         document.getElementById('remoteOnly').addEventListener('change', renderJobs);
 
+        function renderCategoryFilter(jobs) {
+            const counts = {all: jobs.length};
+            for (const j of jobs) {
+                const cat = j.category || 'otro';
+                counts[cat] = (counts[cat] || 0) + 1;
+            }
+
+            const container = document.getElementById('categoryFilter');
+            container.innerHTML = Object.entries(CATEGORY_LABELS)
+                .filter(([key]) => key === 'all' || (counts[key] && counts[key] > 0))
+                .map(([key, label]) => `
+                    <button class="category-btn ${activeCategory === key ? 'active' : ''}"
+                            onclick="filterByCategory('${key}')">
+                        ${label}<span class="category-count">(${counts[key] || 0})</span>
+                    </button>
+                `).join('');
+        }
+
+        function filterByCategory(cat) {
+            activeCategory = cat;
+            renderJobs();
+        }
+
         function renderJobs() {
             const remoteOnly = document.getElementById('remoteOnly').checked;
             let jobs = getStoredJobs();
 
             if (remoteOnly) {
                 jobs = jobs.filter(j => j.is_remote);
+            }
+
+            renderCategoryFilter(jobs);
+
+            if (activeCategory !== 'all') {
+                jobs = jobs.filter(j => (j.category || 'otro') === activeCategory);
             }
 
             jobs.sort((a, b) => (b.scraped_date || '').localeCompare(a.scraped_date || ''));
@@ -633,7 +741,10 @@
                 <div class="job-card">
                     <div class="job-card-header">
                         <div class="job-title">${escapeHtml(job.title || '')}</div>
-                        <span class="job-source source-${job.source || ''}">${(job.source || '').toUpperCase()}</span>
+                        <div>
+                            <span class="badge" style="margin-right:4px">${CATEGORY_LABELS[job.category] || 'Otro'}</span>
+                            <span class="job-source source-${job.source || ''}">${(job.source || '').toUpperCase()}</span>
+                        </div>
                     </div>
                     <div class="job-company">🏢 ${escapeHtml(job.company || 'Empresa')}</div>
                     <div class="job-details">
@@ -666,6 +777,9 @@
             document.getElementById('statBumeran').textContent = bySrc.bumeran || 0;
             document.getElementById('statIndeed').textContent = bySrc.indeed || 0;
             document.getElementById('statLinkedin').textContent = bySrc.linkedin || 0;
+            document.getElementById('statEmpleosperu').textContent = bySrc.empleosperu || 0;
+            document.getElementById('statOpcionempleo').textContent = bySrc.opcionempleo || 0;
+            document.getElementById('statJobsfirst').textContent = bySrc.jobsfirst || 0;
         }
 
         async function scrapeJobs(pages) {

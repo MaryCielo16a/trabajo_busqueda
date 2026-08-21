@@ -26,6 +26,21 @@ COMPUTRABAJO_BASE_URL = "https://www.computrabajo.com.pe"
 BUMERAN_BASE_URL = "https://www.bumeran.com.pe"
 INDEED_BASE_URL = "https://pe.indeed.com"
 LINKEDIN_BASE_URL = "https://www.linkedin.com"
+EMPLEOSPERU_BASE_URL = "https://www.empleosperu.gob.pe"
+OPCIONEMPLEO_BASE_URL = "https://www.opcionempleo.pe"
+JOBSFIRST_BASE_URL = "https://www.jobsfirst.pe"
+
+CATEGORIES = {
+    "frontend": ["frontend", "front-end", "front end", "react", "vue", "angular", "html", "css", "ui", "ux", "maquetador", "web developer"],
+    "backend": ["backend", "back-end", "back end", "node", "python", "java", "php", "django", "fastapi", "spring", ".net", "c#"],
+    "fullstack": ["fullstack", "full-stack", "full stack"],
+    "data": ["data", "datos", "analista", "analyst", "bi", "power bi", "tableau", "sql", "excel", "etl", "ciencia de datos", "data science", "machine learning"],
+    "mobile": ["mobile", "android", "ios", "flutter", "react native", "kotlin", "swift"],
+    "devops": ["devops", "cloud", "aws", "azure", "docker", "kubernetes", "infraestructura", "sre"],
+    "qa": ["qa", "testing", "tester", "quality", "calidad", "automatizacion de pruebas", "selenium"],
+    "soporte": ["soporte", "support", "help desk", "mesa de ayuda", "tecnico", "helpdesk"],
+    "otro": [],
+}
 
 SENDER_EMAIL = os.getenv("SENDER_EMAIL", "")
 SENDER_APP_PASSWORD = os.getenv("SENDER_APP_PASSWORD", "")
@@ -122,7 +137,7 @@ def get_stats():
     remote = conn.execute("SELECT COUNT(*) FROM jobs WHERE is_remote = 1").fetchone()[0]
 
     by_source = {}
-    for source in ["computrabajo", "bumeran", "indeed", "linkedin"]:
+    for source in ["computrabajo", "bumeran", "indeed", "linkedin", "empleosperu", "opcionempleo", "jobsfirst"]:
         count = conn.execute("SELECT COUNT(*) FROM jobs WHERE source = ?", (source,)).fetchone()[0]
         if count > 0:
             by_source[source] = count
@@ -222,6 +237,16 @@ def set_remote_only(value):
     conn.close()
 
 
+def classify_job(title):
+    t = title.lower()
+    for cat, words in CATEGORIES.items():
+        if cat == "otro":
+            continue
+        if any(w in t for w in words):
+            return cat
+    return "otro"
+
+
 def check_remote(text):
     return any(w in text.lower() for w in REMOTE_WORDS)
 
@@ -289,6 +314,7 @@ def scrape_computrabajo(keywords, pages=1):
                                 "url": href,
                                 "source": "computrabajo",
                                 "is_remote": is_remote,
+                                "category": classify_job(title),
                             })
                         if jobs:
                             break
@@ -356,6 +382,7 @@ def scrape_bumeran(keywords, pages=1):
                                 "url": href,
                                 "source": "bumeran",
                                 "is_remote": is_remote,
+                                "category": classify_job(title),
                             })
                         if jobs:
                             break
@@ -423,6 +450,7 @@ def scrape_indeed(keywords, pages=1):
                         "url": href,
                         "source": "indeed",
                         "is_remote": is_remote,
+                        "category": classify_job(title),
                     })
             except Exception:
                 continue
@@ -483,9 +511,190 @@ def scrape_linkedin(keywords, pages=1):
                         "url": href,
                         "source": "linkedin",
                         "is_remote": is_remote,
+                        "category": classify_job(title),
                     })
             except Exception:
                 continue
+    return jobs
+
+
+def scrape_empleosperu(keywords, pages=1):
+    jobs = []
+    session = requests.Session()
+    session.headers.update(HEADERS)
+
+    for keyword in keywords:
+        kw = keyword.strip()
+        if not kw:
+            continue
+        url = f"{EMPLEOSPERU_BASE_URL}/portal-empleos/buscar-empleo?keyword={quote(kw)}"
+        try:
+            resp = session.get(url, timeout=6)
+            if resp.status_code != 200:
+                continue
+            soup = BeautifulSoup(resp.content, "html.parser")
+
+            for sel in [
+                ("div", {"class": "card"}),
+                ("div", {"class": "job-item"}),
+                ("div", {"class": "resultado"}),
+                ("article", {}),
+            ]:
+                elems = soup.find_all(sel[0], sel[1]) if sel[1] else soup.find_all(sel[0])
+                if not elems:
+                    continue
+                for el in elems:
+                    a = el.find("a")
+                    if not a:
+                        continue
+                    title = a.get_text(strip=True)
+                    href = a.get("href", "")
+                    if not title or len(title) < 5:
+                        continue
+                    if not href.startswith("http"):
+                        href = EMPLEOSPERU_BASE_URL + href
+
+                    company = "Estado Peruano"
+                    for span in el.find_all(["span", "p", "div"]):
+                        t = span.get_text(strip=True)
+                        if t and len(t) > 3 and t != title and "empleo" not in t.lower():
+                            company = t
+                            break
+
+                    location = "Peru"
+                    is_remote = check_remote(title)
+
+                    jobs.append({
+                        "id": hashlib.md5(href.encode()).hexdigest(),
+                        "title": title,
+                        "company": company,
+                        "location": location,
+                        "salary": "",
+                        "url": href,
+                        "source": "empleosperu",
+                        "is_remote": is_remote,
+                        "category": classify_job(title),
+                    })
+                if jobs:
+                    break
+        except Exception:
+            continue
+    return jobs
+
+
+def scrape_opcionempleo(keywords, pages=1):
+    jobs = []
+    session = requests.Session()
+    session.headers.update(HEADERS)
+
+    for keyword in keywords:
+        kw = keyword.strip()
+        if not kw:
+            continue
+        url = f"{OPCIONEMPLEO_BASE_URL}/buscar/empleos?s={quote(kw)}&l=Peru"
+        try:
+            resp = session.get(url, timeout=6)
+            if resp.status_code != 200:
+                continue
+            soup = BeautifulSoup(resp.content, "html.parser")
+
+            cards = soup.find_all("article")
+            if not cards:
+                cards = soup.find_all("div", {"class": "job"})
+            if not cards:
+                cards = soup.find_all("li", {"class": "job"})
+
+            for card in cards:
+                a = card.find("a")
+                if not a:
+                    continue
+                title = a.get_text(strip=True)
+                href = a.get("href", "")
+                if not title or len(title) < 5:
+                    continue
+                if not href.startswith("http"):
+                    href = OPCIONEMPLEO_BASE_URL + href
+
+                company_el = card.find("span", {"class": "company"}) or card.find("p")
+                company = company_el.get_text(strip=True) if company_el else "Empresa"
+
+                location_el = card.find("span", {"class": "location"})
+                location = location_el.get_text(strip=True) if location_el else "Peru"
+
+                is_remote = check_remote(title + " " + location)
+
+                jobs.append({
+                    "id": hashlib.md5(href.encode()).hexdigest(),
+                    "title": title,
+                    "company": company,
+                    "location": location,
+                    "salary": "",
+                    "url": href,
+                    "source": "opcionempleo",
+                    "is_remote": is_remote,
+                    "category": classify_job(title),
+                })
+        except Exception:
+            continue
+    return jobs
+
+
+def scrape_jobsfirst(keywords, pages=1):
+    jobs = []
+    session = requests.Session()
+    session.headers.update(HEADERS)
+
+    for keyword in keywords:
+        kw = keyword.strip()
+        if not kw:
+            continue
+        url = f"{JOBSFIRST_BASE_URL}/search?q={quote(kw)}&l=Peru"
+        try:
+            resp = session.get(url, timeout=6)
+            if resp.status_code != 200:
+                continue
+            soup = BeautifulSoup(resp.content, "html.parser")
+
+            cards = soup.find_all("div", {"class": "job-card"})
+            if not cards:
+                cards = soup.find_all("article")
+            if not cards:
+                cards = soup.find_all("div", {"class": "result"})
+            if not cards:
+                cards = soup.find_all("li", {"class": "job"})
+
+            for card in cards:
+                a = card.find("a")
+                if not a:
+                    continue
+                title = a.get_text(strip=True)
+                href = a.get("href", "")
+                if not title or len(title) < 5:
+                    continue
+                if not href.startswith("http"):
+                    href = JOBSFIRST_BASE_URL + href
+
+                company_el = card.find("span", {"class": "company"}) or card.find("div", {"class": "company"}) or card.find("p")
+                company = company_el.get_text(strip=True) if company_el else "Empresa"
+
+                location_el = card.find("span", {"class": "location"}) or card.find("div", {"class": "location"})
+                location = location_el.get_text(strip=True) if location_el else "Peru"
+
+                is_remote = check_remote(title + " " + location)
+
+                jobs.append({
+                    "id": hashlib.md5(href.encode()).hexdigest(),
+                    "title": title,
+                    "company": company,
+                    "location": location,
+                    "salary": "",
+                    "url": href,
+                    "source": "jobsfirst",
+                    "is_remote": is_remote,
+                    "category": classify_job(title),
+                })
+        except Exception:
+            continue
     return jobs
 
 
@@ -501,6 +710,9 @@ def send_email(jobs):
         "bumeran": "#7b1fa2",
         "indeed": "#2557a7",
         "linkedin": "#0a66c2",
+        "empleosperu": "#d32f2f",
+        "opcionempleo": "#e65100",
+        "jobsfirst": "#2e7d32",
     }
 
     cards = ""
@@ -588,8 +800,11 @@ class handler(BaseHTTPRequestHandler):
                 bm_jobs = scrape_bumeran(keywords, pages=1)
                 in_jobs = scrape_indeed(keywords, pages=1)
                 li_jobs = scrape_linkedin(keywords, pages=1)
+                ep_jobs = scrape_empleosperu(keywords, pages=1)
+                oe_jobs = scrape_opcionempleo(keywords, pages=1)
+                jf_jobs = scrape_jobsfirst(keywords, pages=1)
 
-                all_jobs = ct_jobs + bm_jobs + in_jobs + li_jobs
+                all_jobs = ct_jobs + bm_jobs + in_jobs + li_jobs + ep_jobs + oe_jobs + jf_jobs
                 added = 0
                 for j in all_jobs:
                     added += save_job(j)
@@ -623,8 +838,11 @@ class handler(BaseHTTPRequestHandler):
                 bm_jobs = scrape_bumeran(keywords, pages=1)
                 in_jobs = scrape_indeed(keywords, pages=1)
                 li_jobs = scrape_linkedin(keywords, pages=1)
+                ep_jobs = scrape_empleosperu(keywords, pages=1)
+                oe_jobs = scrape_opcionempleo(keywords, pages=1)
+                jf_jobs = scrape_jobsfirst(keywords, pages=1)
 
-                all_jobs = ct_jobs + bm_jobs + in_jobs + li_jobs
+                all_jobs = ct_jobs + bm_jobs + in_jobs + li_jobs + ep_jobs + oe_jobs + jf_jobs
                 added = 0
                 for j in all_jobs:
                     added += save_job(j)
@@ -645,6 +863,9 @@ class handler(BaseHTTPRequestHandler):
                         "bumeran": len(bm_jobs),
                         "indeed": len(in_jobs),
                         "linkedin": len(li_jobs),
+                        "empleosperu": len(ep_jobs),
+                        "opcionempleo": len(oe_jobs),
+                        "jobsfirst": len(jf_jobs),
                     }
                 })
             except Exception as e:
