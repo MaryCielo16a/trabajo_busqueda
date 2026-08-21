@@ -508,6 +508,228 @@
             margin-top: 10px;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            padding: 8px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #555;
+        }
+
+        .page-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            color: #999;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        /* Dream AI Assistant */
+        .dream-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102,126,234,0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .dream-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 28px rgba(102,126,234,0.7);
+        }
+
+        .dream-chat {
+            position: fixed;
+            bottom: 96px;
+            right: 24px;
+            width: 380px;
+            max-height: 520px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .dream-chat.open {
+            display: flex;
+        }
+
+        .dream-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dream-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .dream-header-info h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .dream-header-info p {
+            margin: 0;
+            font-size: 11px;
+            opacity: 0.85;
+        }
+
+        .dream-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .dream-close:hover { opacity: 1; }
+
+        .dream-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 350px;
+            min-height: 200px;
+        }
+
+        .dream-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .dream-msg.bot {
+            background: #f0f2ff;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .dream-msg.user {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .dream-input-area {
+            display: flex;
+            padding: 12px;
+            gap: 8px;
+            border-top: 1px solid #eee;
+        }
+
+        .dream-input-area input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .dream-input-area input:focus {
+            border-color: #667eea;
+        }
+
+        .dream-input-area button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .dream-input-area button:hover {
+            background: #5568d3;
+        }
+
+        .dream-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 16px 12px;
+        }
+
+        .dream-suggestion {
+            padding: 5px 10px;
+            background: #f0f2ff;
+            border: 1px solid #d0d5f0;
+            border-radius: 14px;
+            font-size: 11px;
+            cursor: pointer;
+            color: #667eea;
+            transition: all 0.2s;
+        }
+
+        .dream-suggestion:hover {
+            background: #667eea;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .stats {
                 grid-template-columns: 1fr;
@@ -529,6 +751,12 @@
 
             .job-details {
                 flex-direction: column;
+            }
+
+            .dream-chat {
+                width: calc(100vw - 32px);
+                right: 16px;
+                bottom: 88px;
             }
         }
     </style>
@@ -643,6 +871,32 @@
         </div>
     </div>
 
+    <!-- Dream AI Assistant -->
+    <button class="dream-fab" onclick="toggleDream()" title="Dream - Asistente IA">🤖</button>
+    <div class="dream-chat" id="dreamChat">
+        <div class="dream-header">
+            <div class="dream-avatar">🤖</div>
+            <div class="dream-header-info">
+                <h3>Dream</h3>
+                <p>Asistente de busqueda laboral</p>
+            </div>
+            <button class="dream-close" onclick="toggleDream()">&times;</button>
+        </div>
+        <div class="dream-messages" id="dreamMessages">
+            <div class="dream-msg bot">Hola! Soy <b>Dream</b>, tu asistente de busqueda laboral. Puedo ayudarte a encontrar ofertas, filtrar por categoria, darte consejos y mas. Preguntame lo que quieras!</div>
+        </div>
+        <div class="dream-suggestions" id="dreamSuggestions">
+            <span class="dream-suggestion" onclick="askDream('Cuantas ofertas remotas hay?')">Ofertas remotas</span>
+            <span class="dream-suggestion" onclick="askDream('Que categorias tienen mas ofertas?')">Top categorias</span>
+            <span class="dream-suggestion" onclick="askDream('Muestra ofertas de data analyst')">Data analyst</span>
+            <span class="dream-suggestion" onclick="askDream('Dame consejos para mi CV')">Consejos CV</span>
+        </div>
+        <div class="dream-input-area">
+            <input type="text" id="dreamInput" placeholder="Escribe tu pregunta..." onkeypress="if(event.key==='Enter')sendDream()">
+            <button onclick="sendDream()">Enviar</button>
+        </div>
+    </div>
+
     <script>
         function getStoredJobs() {
             try {
@@ -664,6 +918,8 @@
         }
 
         let activeCategory = 'all';
+        let currentPage = 1;
+        const JOBS_PER_PAGE = 15;
 
         const CATEGORY_LABELS = {
             all: 'Todas',
@@ -684,7 +940,7 @@
             updateStats();
         });
 
-        document.getElementById('remoteOnly').addEventListener('change', renderJobs);
+        document.getElementById('remoteOnly').addEventListener('change', () => { currentPage = 1; renderJobs(); });
 
         function renderCategoryFilter(jobs) {
             const counts = {all: jobs.length};
@@ -706,6 +962,7 @@
 
         function filterByCategory(cat) {
             activeCategory = cat;
+            currentPage = 1;
             renderJobs();
         }
 
@@ -726,8 +983,9 @@
             jobs.sort((a, b) => (b.scraped_date || '').localeCompare(a.scraped_date || ''));
 
             const jobsList = document.getElementById('jobsList');
+            const totalJobs = jobs.length;
 
-            if (jobs.length === 0) {
+            if (totalJobs === 0) {
                 jobsList.innerHTML = `
                     <div class="empty-state">
                         <p>📭 No hay ofertas aun</p>
@@ -737,7 +995,12 @@
                 return;
             }
 
-            jobsList.innerHTML = jobs.slice(0, 100).map(job => `
+            const totalPages = Math.ceil(totalJobs / JOBS_PER_PAGE);
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * JOBS_PER_PAGE;
+            const pageJobs = jobs.slice(start, start + JOBS_PER_PAGE);
+
+            jobsList.innerHTML = pageJobs.map(job => `
                 <div class="job-card">
                     <div class="job-card-header">
                         <div class="job-title">${escapeHtml(job.title || '')}</div>
@@ -762,6 +1025,41 @@
                     </div>
                 </div>
             `).join('');
+
+            if (totalPages > 1) {
+                let paginationHtml = '<div class="pagination">';
+                paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>&laquo; Anterior</button>`;
+
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+                if (startPage > 1) {
+                    paginationHtml += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+                    if (startPage > 2) paginationHtml += `<span style="color:#999;padding:0 4px">...</span>`;
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) paginationHtml += `<span style="color:#999;padding:0 4px">...</span>`;
+                    paginationHtml += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+                }
+
+                paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente &raquo;</button>`;
+                paginationHtml += '</div>';
+                paginationHtml += `<p class="page-info">Mostrando ${start + 1}-${Math.min(start + JOBS_PER_PAGE, totalJobs)} de ${totalJobs} ofertas</p>`;
+
+                jobsList.innerHTML += paginationHtml;
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderJobs();
+            document.querySelector('.jobs-container').scrollIntoView({behavior: 'smooth'});
         }
 
         function updateStats() {
@@ -918,6 +1216,117 @@
                 "'": '&#039;'
             };
             return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // ---- Dream AI Assistant ----
+        function toggleDream() {
+            document.getElementById('dreamChat').classList.toggle('open');
+        }
+
+        function askDream(text) {
+            document.getElementById('dreamInput').value = text;
+            sendDream();
+        }
+
+        function sendDream() {
+            const input = document.getElementById('dreamInput');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+
+            addDreamMsg(text, 'user');
+            const response = getDreamResponse(text);
+            setTimeout(() => addDreamMsg(response, 'bot'), 400);
+        }
+
+        function addDreamMsg(text, type) {
+            const container = document.getElementById('dreamMessages');
+            const div = document.createElement('div');
+            div.className = 'dream-msg ' + type;
+            div.innerHTML = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function getDreamResponse(query) {
+            const q = query.toLowerCase();
+            const jobs = getStoredJobs();
+            const remote = jobs.filter(j => j.is_remote);
+
+            if (q.includes('remoto') || q.includes('remote')) {
+                if (remote.length === 0) return 'Aun no hay ofertas remotas. Haz una busqueda primero!';
+                const cats = {};
+                remote.forEach(j => { const c = j.category || 'otro'; cats[c] = (cats[c]||0)+1; });
+                const top = Object.entries(cats).sort((a,b) => b[1]-a[1]).slice(0,3).map(([k,v]) => `<b>${CATEGORY_LABELS[k]||k}</b>: ${v}`).join(', ');
+                return `Hay <b>${remote.length}</b> ofertas remotas de ${jobs.length} totales. Top categorias remotas: ${top}`;
+            }
+
+            if (q.includes('categor') || q.includes('top')) {
+                if (jobs.length === 0) return 'No hay ofertas guardadas. Usa los botones de busqueda para empezar!';
+                const cats = {};
+                jobs.forEach(j => { const c = j.category || 'otro'; cats[c] = (cats[c]||0)+1; });
+                const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]);
+                const list = sorted.map(([k,v]) => `<b>${CATEGORY_LABELS[k]||k}</b>: ${v} ofertas`).join('<br>');
+                return `Distribucion por categoria:<br>${list}`;
+            }
+
+            if (q.includes('data') || q.includes('datos') || q.includes('analista')) {
+                const dataJobs = jobs.filter(j => (j.category||'') === 'data');
+                if (dataJobs.length === 0) return 'No encontre ofertas de Data/Analista. Intenta agregar filtros como "analista de datos" o "data analyst" y haz una busqueda.';
+                const remoteData = dataJobs.filter(j => j.is_remote);
+                return `Hay <b>${dataJobs.length}</b> ofertas de Data/Analista, ${remoteData.length} son remotas. Puedes filtrar por la categoria "Data / Analista" usando los botones arriba de las ofertas.`;
+            }
+
+            if (q.includes('frontend') || q.includes('front')) {
+                const fJobs = jobs.filter(j => (j.category||'') === 'frontend');
+                if (fJobs.length === 0) return 'No hay ofertas de Frontend por ahora. Agrega filtros como "react remoto" o "frontend junior".';
+                return `Hay <b>${fJobs.length}</b> ofertas de Frontend, ${fJobs.filter(j=>j.is_remote).length} remotas. Plataformas: ${[...new Set(fJobs.map(j=>j.source))].join(', ')}`;
+            }
+
+            if (q.includes('backend') || q.includes('back end')) {
+                const bJobs = jobs.filter(j => (j.category||'') === 'backend');
+                if (bJobs.length === 0) return 'No hay ofertas de Backend. Prueba con filtros como "python remoto" o "node.js junior".';
+                return `Hay <b>${bJobs.length}</b> ofertas de Backend, ${bJobs.filter(j=>j.is_remote).length} remotas.`;
+            }
+
+            if (q.includes('cv') || q.includes('curriculum') || q.includes('consejo')) {
+                const tips = [
+                    'Destaca tus proyectos en GitHub con demos en vivo. Los reclutadores valoran ver trabajo real.',
+                    'Para roles remotos, menciona experiencia con herramientas como Slack, Jira, Git y metodologias agiles.',
+                    'Agrega palabras clave del puesto en tu CV. Muchas empresas usan filtros automaticos (ATS).',
+                    'Incluye metricas: "Reduje tiempo de carga en 40%" es mejor que "Optimize la pagina web".',
+                    'Para Data Analyst, resalta SQL, Excel avanzado, Power BI o Tableau, y Python/R si los manejas.',
+                    'Ten un portafolio web desplegado. Es tu carta de presentacion como desarrollador.',
+                    'Personaliza cada postulacion. Un CV generico tiene menos probabilidades de pasar el filtro.'
+                ];
+                return tips[Math.floor(Math.random() * tips.length)];
+            }
+
+            if (q.includes('plataforma') || q.includes('fuente') || q.includes('donde')) {
+                const bySrc = {};
+                jobs.forEach(j => { bySrc[j.source] = (bySrc[j.source]||0)+1; });
+                if (Object.keys(bySrc).length === 0) return 'Aun no hay datos. Busco en 7 plataformas: Computrabajo, Bumeran, Indeed, LinkedIn, Empleos Peru, Opcionempleo y Jobs First.';
+                const list = Object.entries(bySrc).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `<b>${k}</b>: ${v}`).join('<br>');
+                return `Ofertas por plataforma:<br>${list}`;
+            }
+
+            if (q.includes('buscar') || q.includes('como') || q.includes('ayuda') || q.includes('que puedes')) {
+                return 'Puedo ayudarte con:<br>- Ver cuantas ofertas <b>remotas</b> hay<br>- Mostrar <b>categorias</b> con mas ofertas<br>- Buscar ofertas de <b>frontend, data, backend</b><br>- Dar <b>consejos para tu CV</b><br>- Ver ofertas por <b>plataforma</b><br>Preguntame lo que quieras!';
+            }
+
+            if (q.includes('hola') || q.includes('hi') || q.includes('hey')) {
+                return 'Hola! Soy Dream. ¿En que puedo ayudarte hoy? Puedo darte info sobre ofertas, categorias o consejos para tu busqueda.';
+            }
+
+            if (q.includes('gracias') || q.includes('thanks')) {
+                return 'De nada! Estoy aqui para ayudarte en tu busqueda laboral. Exitos!';
+            }
+
+            if (jobs.length === 0) {
+                return 'Aun no tengo ofertas para analizar. Haz click en uno de los botones de busqueda y luego preguntame lo que quieras!';
+            }
+
+            return `Tengo <b>${jobs.length}</b> ofertas guardadas (${remote.length} remotas). Preguntame sobre: ofertas remotas, categorias, plataformas, o pideme consejos para tu CV.`;
         }
     </script>
 </body>
