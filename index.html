@@ -580,54 +580,71 @@
     </div>
 
     <script>
-        // Load jobs on page load
+        function getStoredJobs() {
+            try {
+                return JSON.parse(localStorage.getItem('jobs') || '[]');
+            } catch { return []; }
+        }
+
+        function storeJobs(newJobs) {
+            const existing = getStoredJobs();
+            const ids = new Set(existing.map(j => j.id));
+            for (const j of newJobs) {
+                if (!ids.has(j.id)) {
+                    existing.push(j);
+                    ids.add(j.id);
+                }
+            }
+            localStorage.setItem('jobs', JSON.stringify(existing));
+            return existing;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadFilters();
-            loadJobs();
-            loadStats();
-            setInterval(loadJobs, 30000);
-            setInterval(loadStats, 30000);
+            renderJobs();
+            updateStats();
         });
 
-        // Listen for remote only checkbox
-        document.getElementById('remoteOnly').addEventListener('change', loadJobs);
+        document.getElementById('remoteOnly').addEventListener('change', renderJobs);
 
-        async function loadJobs() {
+        function renderJobs() {
             const remoteOnly = document.getElementById('remoteOnly').checked;
-            const response = await fetch(`/api/jobs?limit=50&remote_only=${remoteOnly}`);
-            const data = await response.json();
+            let jobs = getStoredJobs();
+
+            if (remoteOnly) {
+                jobs = jobs.filter(j => j.is_remote);
+            }
+
+            jobs.sort((a, b) => (b.scraped_date || '').localeCompare(a.scraped_date || ''));
 
             const jobsList = document.getElementById('jobsList');
 
-            if (!data.success || data.count === 0) {
+            if (jobs.length === 0) {
                 jobsList.innerHTML = `
                     <div class="empty-state">
-                        <p>📭 No hay ofertas aún</p>
-                        <p style="font-size: 12px; margin-top: 10px;">Haz click en "Búsqueda rápida" para comenzar</p>
+                        <p>📭 No hay ofertas aun</p>
+                        <p style="font-size: 12px; margin-top: 10px;">Haz click en "Busqueda rapida" para comenzar</p>
                     </div>
                 `;
                 return;
             }
 
-            jobsList.innerHTML = data.jobs.map(job => `
+            jobsList.innerHTML = jobs.slice(0, 100).map(job => `
                 <div class="job-card">
                     <div class="job-card-header">
-                        <div class="job-title">${escapeHtml(job.title)}</div>
-                        <span class="job-source source-${job.source}">${job.source.toUpperCase()}</span>
+                        <div class="job-title">${escapeHtml(job.title || '')}</div>
+                        <span class="job-source source-${job.source || ''}">${(job.source || '').toUpperCase()}</span>
                     </div>
-                    <div class="job-company">🏢 ${escapeHtml(job.company)}</div>
+                    <div class="job-company">🏢 ${escapeHtml(job.company || 'Empresa')}</div>
                     <div class="job-details">
                         <div class="job-detail ${job.is_remote ? 'remote' : ''}">
-                            📍 ${job.is_remote ? '✓ Remoto' : job.location}
+                            📍 ${job.is_remote ? '✓ Remoto' : escapeHtml(job.location || '')}
                         </div>
-                        ${job.salary && job.salary !== 'Not specified' ? `
+                        ${job.salary ? `
                             <div class="job-detail">
                                 💰 ${escapeHtml(job.salary)}
                             </div>
                         ` : ''}
-                        <div class="job-detail">
-                            📅 ${new Date(job.posted_date).toLocaleDateString('es-ES')}
-                        </div>
                     </div>
                     <div class="job-actions">
                         <a href="${job.url}" target="_blank">Ver oferta →</a>
@@ -636,18 +653,19 @@
             `).join('');
         }
 
-        async function loadStats() {
-            const response = await fetch('/api/stats');
-            const data = await response.json();
-
-            if (data.success) {
-                document.getElementById('statTotal').textContent = data.total_jobs;
-                document.getElementById('statRemote').textContent = data.remote_jobs;
-                document.getElementById('statComputrabajo').textContent = data.by_source.computrabajo || 0;
-                document.getElementById('statBumeran').textContent = data.by_source.bumeran || 0;
-                document.getElementById('statIndeed').textContent = data.by_source.indeed || 0;
-                document.getElementById('statLinkedin').textContent = data.by_source.linkedin || 0;
+        function updateStats() {
+            const jobs = getStoredJobs();
+            const remote = jobs.filter(j => j.is_remote).length;
+            const bySrc = {};
+            for (const j of jobs) {
+                bySrc[j.source] = (bySrc[j.source] || 0) + 1;
             }
+            document.getElementById('statTotal').textContent = jobs.length;
+            document.getElementById('statRemote').textContent = remote;
+            document.getElementById('statComputrabajo').textContent = bySrc.computrabajo || 0;
+            document.getElementById('statBumeran').textContent = bySrc.bumeran || 0;
+            document.getElementById('statIndeed').textContent = bySrc.indeed || 0;
+            document.getElementById('statLinkedin').textContent = bySrc.linkedin || 0;
         }
 
         async function scrapeJobs(pages) {
@@ -655,71 +673,56 @@
             btn.disabled = true;
 
             const progressContainer = document.getElementById('progressContainer');
+            const progressText = document.getElementById('progressText');
+            const progressFill = document.getElementById('progressFill');
+
             progressContainer.classList.add('active');
+            progressText.textContent = 'Buscando ofertas en Computrabajo, Bumeran, Indeed y LinkedIn...';
+            progressFill.style.width = '20%';
+            progressFill.textContent = 'Buscando...';
 
             try {
                 const response = await fetch('/api/scrape', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pages: pages })
                 });
 
                 const data = await response.json();
 
-                if (data.success) {
-                    // Poll for progress
-                    let isComplete = false;
-                    while (!isComplete) {
-                        const statusResponse = await fetch('/api/scrape_status');
-                        const statusData = await statusResponse.json();
+                progressFill.style.width = '100%';
+                progressFill.textContent = '100%';
 
-                        const progress = statusData.progress;
-                        document.getElementById('progressFill').style.width = progress + '%';
-                        document.getElementById('progressFill').textContent = progress + '%';
+                if (data.success && data.jobs) {
+                    storeJobs(data.jobs);
+                    renderJobs();
+                    updateStats();
 
-                        if (!statusData.is_scraping) {
-                            isComplete = true;
-                            progressContainer.classList.remove('active');
-                            loadJobs();
-                            loadStats();
-                            alert('✅ ¡Búsqueda completada!');
-                        } else {
-                            await new Promise(resolve => setTimeout(resolve, 500));
-                        }
-                    }
+                    const msg = `Encontradas ${data.jobs_found} ofertas\n` +
+                        `Computrabajo: ${data.by_source.computrabajo}\n` +
+                        `Bumeran: ${data.by_source.bumeran}\n` +
+                        `Indeed: ${data.by_source.indeed}\n` +
+                        `LinkedIn: ${data.by_source.linkedin}\n` +
+                        (data.email_sent ? '\n📧 Email enviado con ofertas remotas' : '');
+                    progressText.textContent = msg;
                 } else {
-                    alert('❌ Error: ' + data.error);
-                    progressContainer.classList.remove('active');
+                    progressText.textContent = 'Error: ' + (data.error || 'Sin resultados');
                 }
+
+                setTimeout(() => progressContainer.classList.remove('active'), 5000);
             } catch (error) {
-                alert('❌ Error: ' + error.message);
-                progressContainer.classList.remove('active');
+                progressText.textContent = 'Error: ' + error.message;
+                setTimeout(() => progressContainer.classList.remove('active'), 5000);
             } finally {
                 btn.disabled = false;
             }
         }
 
-        async function confirmClear() {
-            if (confirm('⚠️ ¿Estás seguro? Esto borrará todas las ofertas guardadas.')) {
-                try {
-                    const response = await fetch('/api/jobs', {
-                        method: 'DELETE'
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        alert('✅ Base de datos limpiada');
-                        loadJobs();
-                        loadStats();
-                    } else {
-                        alert('❌ Error: ' + data.error);
-                    }
-                } catch (error) {
-                    alert('❌ Error: ' + error.message);
-                }
+        function confirmClear() {
+            if (confirm('¿Estas seguro? Esto borrara todas las ofertas guardadas.')) {
+                localStorage.removeItem('jobs');
+                renderJobs();
+                updateStats();
             }
         }
 

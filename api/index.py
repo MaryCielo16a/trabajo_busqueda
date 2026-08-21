@@ -639,6 +639,7 @@ class handler(BaseHTTPRequestHandler):
                     "message": f"Encontradas {len(all_jobs)} ofertas, {added} nuevas guardadas.",
                     "email_sent": email_sent,
                     "jobs_found": len(all_jobs),
+                    "jobs": all_jobs,
                     "by_source": {
                         "computrabajo": len(ct_jobs),
                         "bumeran": len(bm_jobs),
