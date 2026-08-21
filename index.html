@@ -406,6 +406,43 @@
         .btn-apply:hover {
             background: #f57c00;
         }
+        .btn-mark-applied {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .btn-mark-applied:hover {
+            background: #388e3c;
+        }
+        .btn-unapply {
+            background: #78909c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .btn-unapply:hover {
+            background: #546e7a;
+        }
+        .job-applied {
+            border-left: 4px solid #4caf50;
+            background: linear-gradient(135deg, #e8f5e9 0%, #fff 30%);
+        }
+        .badge-applied {
+            background: #4caf50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
 
         /* Job Detail Modal */
         .modal-overlay {
@@ -1531,6 +1568,34 @@
             } catch { return []; }
         }
 
+        function getAppliedJobs() {
+            try {
+                return JSON.parse(localStorage.getItem('applied_jobs') || '{}');
+            } catch { return {}; }
+        }
+
+        function markAsApplied(jobId) {
+            const jobs = getStoredJobs();
+            const job = jobs.find(j => j.id === jobId);
+            const applied = getAppliedJobs();
+            if (applied[jobId]) {
+                delete applied[jobId];
+            } else {
+                applied[jobId] = {
+                    title: job ? job.title : '',
+                    company: job ? job.company : '',
+                    date: new Date().toLocaleDateString('es-PE'),
+                    source: job ? job.source : ''
+                };
+            }
+            localStorage.setItem('applied_jobs', JSON.stringify(applied));
+            renderJobs();
+        }
+
+        function isApplied(jobId) {
+            return !!getAppliedJobs()[jobId];
+        }
+
         function storeJobs(newJobs) {
             const existing = getStoredJobs();
             const ids = new Set(existing.map(j => j.id));
@@ -1627,11 +1692,15 @@
             const start = (currentPage - 1) * JOBS_PER_PAGE;
             const pageJobs = jobs.slice(start, start + JOBS_PER_PAGE);
 
-            jobsList.innerHTML = pageJobs.map(job => `
-                <div class="job-card">
+            const appliedMap = getAppliedJobs();
+            jobsList.innerHTML = pageJobs.map(job => {
+                const applied = !!appliedMap[job.id];
+                return `
+                <div class="job-card ${applied ? 'job-applied' : ''}">
                     <div class="job-card-header">
-                        <div class="job-title">${escapeHtml(job.title || '')}</div>
+                        <div class="job-title">${applied ? '✅ ' : ''}${escapeHtml(job.title || '')}</div>
                         <div>
+                            ${applied ? '<span class="badge-applied">Postulado</span>' : ''}
                             <span class="badge" style="margin-right:4px">${CATEGORY_LABELS[job.category] || 'Otro'}</span>
                             <span class="job-source source-${job.source || ''}">${(job.source || '').toUpperCase()}</span>
                         </div>
@@ -1646,14 +1715,16 @@
                                 💰 ${escapeHtml(job.salary)}
                             </div>
                         ` : ''}
+                        ${applied ? `<div class="job-detail" style="color:#2e7d32">📅 Postulado: ${appliedMap[job.id].date}</div>` : ''}
                     </div>
                     <div class="job-actions">
                         <button class="btn-detail" onclick="event.stopPropagation(); openJobDetail('${job.id}')">🔍 Ver detalle</button>
                         <button class="btn-cv" onclick="event.stopPropagation(); generateCV('${job.id}')">📄 Generar CV</button>
                         <button class="btn-apply" onclick="event.stopPropagation(); openJobDetail('${job.id}', true)">🚀 Postular</button>
+                        <button class="${applied ? 'btn-unapply' : 'btn-mark-applied'}" onclick="event.stopPropagation(); markAsApplied('${job.id}')">${applied ? '↩ Desmarcar' : '✅ Marcar postulado'}</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
             if (totalPages > 1) {
                 let paginationHtml = '<div class="pagination">';
@@ -1876,10 +1947,12 @@
             dreamSection.innerHTML = '';
 
             const actions = document.getElementById('modalActions');
+            const alreadyApplied = isApplied(job.id);
             actions.innerHTML = `
                 <a href="${job.url}" target="_blank" style="background:#667eea;color:white;">🌐 Ver en ${(job.source||'').toUpperCase()}</a>
                 <button onclick="generateCV('${job.id}')" style="background:#43a047;color:white;">📄 Generar CV</button>
                 <button onclick="window.open('${job.url}','_blank')" style="background:#ff9800;color:white;">🚀 Postular</button>
+                <button onclick="markAsApplied('${job.id}'); closeModal();" style="background:${alreadyApplied ? '#78909c' : '#4caf50'};color:white;">${alreadyApplied ? '↩ Desmarcar postulado' : '✅ Marcar como postulado'}</button>
             `;
 
             document.getElementById('jobModal').classList.add('open');
@@ -2985,15 +3058,78 @@ body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; col
                 return `Hay <b>${bJobs.length}</b> ofertas de Backend, ${bJobs.filter(j=>j.is_remote).length} remotas.`;
             }
 
+            if (q.includes('hackathon') || q.includes('hackaton')) {
+                const cvd = getCVData();
+                const hasExtra = cvd.extracurricular && cvd.extracurricular.length > 0;
+                return `Los hackathones se colocan en la seccion <b>"Actividades Extracurriculares"</b> de tu CV. Incluye:<br>
+                - Nombre del hackathon y organizador<br>
+                - Fecha y duracion<br>
+                - Tu rol (ej: desarrollador frontend, lider de equipo)<br>
+                - Que construiste y que tecnologias usaste<br>
+                - Si ganaste algun premio, destacalo!<br><br>
+                ${hasExtra ? 'Ya tienes ' + cvd.extracurricular.length + ' actividades en tu perfil.' : 'Ve a <b>Mi Perfil → Actividades Extracurriculares</b> y agregalo ahi para que aparezca en tus CVs generados.'}`;
+            }
+
+            if (q.includes('experiencia') || q.includes('trabajo anterior') || q.includes('laboral')) {
+                const cvd = getCVData();
+                const hasExp = cvd.experience && cvd.experience.length > 0;
+                return `Para agregar experiencia laboral:<br>
+                - Ve a <b>Mi Perfil → Experiencia Laboral</b><br>
+                - Incluye: cargo, empresa, periodo y descripcion<br>
+                - En la descripcion usa logros medibles (ej: "Automatice reportes reduciendo 3 horas semanales")<br>
+                - Usa verbos de accion: desarrolle, implemente, optimice, lidere<br><br>
+                ${hasExp ? 'Tienes ' + cvd.experience.length + ' experiencia(s) registrada(s). Puedes editarlas en Mi Perfil.' : 'Aun no tienes experiencia registrada. Agregala en Mi Perfil!'}`;
+            }
+
+            if (q.includes('certificado') || q.includes('certificacion') || q.includes('curso')) {
+                const cvd = getCVData();
+                const hasCerts = cvd.certifications && cvd.certifications.length > 0;
+                return `Para certificaciones:<br>
+                - Ve a <b>Mi Perfil → Certificaciones</b><br>
+                - Puedes usar el <b>llenado rapido</b> subiendo una foto/PDF del certificado<br>
+                - Incluye nombre del curso, periodo e institucion<br>
+                - Los tags ayudan a que el CV generado priorice los certificados relevantes al puesto<br><br>
+                ${hasCerts ? 'Tienes ' + cvd.certifications.length + ' certificacion(es). Los CVs generados las ordenan segun relevancia al puesto.' : 'Agrega tus certificaciones en Mi Perfil para que aparezcan en los CVs.'}`;
+            }
+
+            if (q.includes('educacion') || q.includes('universidad') || q.includes('carrera') || q.includes('formacion')) {
+                const cvd = getCVData();
+                return `La formacion academica se coloca en <b>Mi Perfil → Formacion Academica</b>. Incluye:<br>
+                - Nombre de la carrera/programa<br>
+                - Universidad o instituto<br>
+                - Periodo (inicio - fin o "en curso")<br>
+                - Puedes agregar logros academicos relevantes<br><br>
+                ${cvd.education && cvd.education.length > 0 ? 'Tienes ' + cvd.education.length + ' registro(s) de formacion.' : 'Agrega tu formacion en Mi Perfil!'}`;
+            }
+
+            if (q.includes('postul') || q.includes('aplique') || q.includes('aplicado') || q.includes('ya postule')) {
+                const applied = getAppliedJobs();
+                const count = Object.keys(applied).length;
+                if (count === 0) return 'Aun no has marcado ninguna oferta como postulada. Cuando postules a una oferta, haz click en "Marcar como postulado" para llevar el control.';
+                const entries = Object.entries(applied).slice(-5);
+                const list = entries.map(([id, info]) => `- <b>${escapeHtml(info.title||'')}</b> (${info.date||''})`).join('<br>');
+                return `Has postulado a <b>${count}</b> oferta(s). Ultimas postulaciones:<br>${list}`;
+            }
+
             if (q.includes('cv') || q.includes('curriculum') || q.includes('consejo')) {
+                const cvd = getCVData();
+                const sections = [];
+                if (!cvd.experience || cvd.experience.length === 0) sections.push('experiencia laboral');
+                if (!cvd.certifications || cvd.certifications.length === 0) sections.push('certificaciones');
+                if (!cvd.education || cvd.education.length === 0) sections.push('formacion academica');
+                if (!cvd.skills || cvd.skills.length === 0) sections.push('habilidades');
+
+                if (sections.length > 0) {
+                    return `Te recomiendo completar estas secciones en <b>Mi Perfil</b> para mejorar tus CVs generados: <b>${sections.join(', ')}</b>.<br><br>
+                    Tip: Personaliza cada postulacion. Un CV generico tiene menos probabilidades de pasar filtros ATS.`;
+                }
+
                 const tips = [
-                    'Destaca tus proyectos en GitHub con demos en vivo. Los reclutadores valoran ver trabajo real.',
+                    'Tu perfil esta bastante completo! Recuerda que cada CV generado se adapta automaticamente al puesto.',
                     'Para roles remotos, menciona experiencia con herramientas como Slack, Jira, Git y metodologias agiles.',
                     'Agrega palabras clave del puesto en tu CV. Muchas empresas usan filtros automaticos (ATS).',
                     'Incluye metricas: "Reduje tiempo de carga en 40%" es mejor que "Optimize la pagina web".',
-                    'Para Data Analyst, resalta SQL, Excel avanzado, Power BI o Tableau, y Python/R si los manejas.',
-                    'Ten un portafolio web desplegado. Es tu carta de presentacion como desarrollador.',
-                    'Personaliza cada postulacion. Un CV generico tiene menos probabilidades de pasar el filtro.'
+                    'Ten un portafolio web desplegado. Es tu carta de presentacion como desarrollador.'
                 ];
                 return tips[Math.floor(Math.random() * tips.length)];
             }
@@ -3007,7 +3143,7 @@ body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; col
             }
 
             if (q.includes('buscar') || q.includes('como') || q.includes('ayuda') || q.includes('que puedes')) {
-                return 'Puedo ayudarte con:<br>- Ver cuantas ofertas <b>remotas</b> hay<br>- Mostrar <b>categorias</b> con mas ofertas<br>- Buscar ofertas de <b>frontend, data, backend</b><br>- Dar <b>consejos para tu CV</b><br>- Ver ofertas por <b>plataforma</b><br>Preguntame lo que quieras!';
+                return 'Puedo ayudarte con:<br>- Ver cuantas ofertas <b>remotas</b> hay<br>- Mostrar <b>categorias</b> con mas ofertas<br>- Buscar ofertas de <b>frontend, data, backend</b><br>- Dar <b>consejos para tu CV</b><br>- Ver ofertas por <b>plataforma</b><br>- Ver tus <b>postulaciones</b> realizadas<br>- Ayudarte con <b>hackathones, certificaciones, experiencia</b><br>Preguntame lo que quieras!';
             }
 
             if (q.includes('hola') || q.includes('hi') || q.includes('hey')) {
