@@ -906,6 +906,64 @@ class handler(BaseHTTPRequestHandler):
                 self._json_response(200, {"success": True, "message": "Database cleared"})
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
+
+        elif path == "/api/job-detail":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                url = body.get("url", "")
+                if not url:
+                    self._json_response(400, {"success": False, "error": "URL requerida"})
+                    return
+
+                session = requests.Session()
+                session.headers.update(HEADERS)
+                resp = session.get(url, timeout=8)
+                detail = {"description": "", "requirements": "", "salary": "", "modality": "", "schedule": "", "benefits": "", "raw_text": ""}
+
+                if resp.status_code == 200:
+                    soup = BeautifulSoup(resp.content, "html.parser")
+
+                    for tag in soup.find_all(["script", "style", "nav", "footer", "header"]):
+                        tag.decompose()
+
+                    desc_el = (
+                        soup.find("div", {"class": lambda c: c and any(x in (c if isinstance(c, str) else ' '.join(c)) for x in ["description", "descripcion", "detail", "detalle", "content", "body"])})
+                        or soup.find("section", {"class": lambda c: c and "description" in (c if isinstance(c, str) else ' '.join(c))})
+                        or soup.find("article")
+                    )
+                    if desc_el:
+                        detail["description"] = desc_el.get_text(separator="\n", strip=True)[:3000]
+
+                    salary_el = soup.find(string=lambda s: s and any(w in s.lower() for w in ["salario", "sueldo", "remuneración", "salary", "s/.", "pen"]))
+                    if salary_el:
+                        parent = salary_el.find_parent()
+                        if parent:
+                            detail["salary"] = parent.get_text(strip=True)[:200]
+
+                    req_el = soup.find(string=lambda s: s and any(w in s.lower() for w in ["requisitos", "requirements", "perfil", "experiencia requerida"]))
+                    if req_el:
+                        parent = req_el.find_parent()
+                        if parent:
+                            next_el = parent.find_next_sibling()
+                            if next_el:
+                                detail["requirements"] = next_el.get_text(separator="\n", strip=True)[:2000]
+
+                    mod_el = soup.find(string=lambda s: s and any(w in s.lower() for w in ["modalidad", "remoto", "hibrido", "presencial", "teletrabajo"]))
+                    if mod_el:
+                        parent = mod_el.find_parent()
+                        if parent:
+                            detail["modality"] = parent.get_text(strip=True)[:200]
+
+                    if not detail["description"]:
+                        main = soup.find("main") or soup.find("body")
+                        if main:
+                            detail["raw_text"] = main.get_text(separator="\n", strip=True)[:3000]
+
+                self._json_response(200, {"success": True, "detail": detail})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
         else:
             self._json_response(404, {"success": False, "error": "Not found"})
 

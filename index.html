@@ -375,6 +375,241 @@
             background: #388e3c;
         }
 
+        .btn-detail {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-detail:hover {
+            background: #5568d3;
+        }
+
+        .btn-apply {
+            padding: 8px 16px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-apply:hover {
+            background: #f57c00;
+        }
+
+        /* Job Detail Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px 16px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        .modal-header-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px; right: 16px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-section p, .modal-section pre {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: inherit;
+        }
+
+        .modal-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .modal-info-item {
+            background: #f8f9ff;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .modal-info-item label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #999;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-info-item p {
+            font-size: 15px;
+            color: #333;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 16px 24px;
+            border-top: 1px solid #eee;
+            background: #fafafa;
+            border-radius: 0 0 16px 16px;
+            position: sticky;
+            bottom: 0;
+        }
+
+        .modal-actions button, .modal-actions a {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dream-answers {
+            background: #f0f2ff;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .dream-answers h4 {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .dream-answer-item {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .dream-answer-item .q {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .dream-answer-item .a {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .copy-btn {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            color: #667eea;
+            float: right;
+        }
+
+        .copy-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .loading-detail {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .modal-overlay { padding: 10px; }
+            .modal-info-grid { grid-template-columns: 1fr; }
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -887,6 +1122,28 @@
         </div>
     </div>
 
+    <!-- Job Detail Modal -->
+    <div class="modal-overlay" id="jobModal" onclick="if(event.target===this)closeModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <h2 id="modalTitle">Cargando...</h2>
+                <div class="modal-header-meta">
+                    <span id="modalCompany"></span>
+                    <span id="modalSource"></span>
+                </div>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="modal-info-grid" id="modalInfoGrid"></div>
+                <div class="modal-section" id="modalDescription">
+                    <div class="loading-detail"><div class="spinner"></div>Cargando detalles de la oferta...</div>
+                </div>
+                <div class="modal-section" id="modalDreamAnswers"></div>
+            </div>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
     <!-- Dream AI Assistant -->
     <button class="dream-fab" onclick="toggleDream()" title="Dream - Asistente IA">🤖</button>
     <div class="dream-chat" id="dreamChat">
@@ -1037,8 +1294,9 @@
                         ` : ''}
                     </div>
                     <div class="job-actions">
-                        <a href="${job.url}" target="_blank">Ver oferta →</a>
+                        <button class="btn-detail" onclick="event.stopPropagation(); openJobDetail('${job.id}')">🔍 Ver detalle</button>
                         <button class="btn-cv" onclick="event.stopPropagation(); generateCV('${job.id}')">📄 Generar CV</button>
+                        <button class="btn-apply" onclick="event.stopPropagation(); openJobDetail('${job.id}', true)">🚀 Postular</button>
                     </div>
                 </div>
             `).join('');
@@ -1223,6 +1481,197 @@
                 alert('Error actualizando filtro');
             }
         }
+
+        // ---- JOB DETAIL MODAL ----
+        let currentModalJob = null;
+
+        function openJobDetail(jobId, scrollToApply) {
+            const jobs = getStoredJobs();
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            currentModalJob = job;
+
+            document.getElementById('modalTitle').textContent = job.title || 'Sin titulo';
+            document.getElementById('modalCompany').textContent = '🏢 ' + (job.company || 'Empresa');
+            document.getElementById('modalSource').textContent = '📌 ' + (job.source || '').toUpperCase();
+
+            const infoGrid = document.getElementById('modalInfoGrid');
+            infoGrid.innerHTML = `
+                <div class="modal-info-item">
+                    <label>Ubicacion</label>
+                    <p>${job.is_remote ? '✅ Remoto' : escapeHtml(job.location || 'No especificada')}</p>
+                </div>
+                <div class="modal-info-item">
+                    <label>Categoria</label>
+                    <p>${CATEGORY_LABELS[job.category] || 'Otro'}</p>
+                </div>
+                <div class="modal-info-item">
+                    <label>Salario</label>
+                    <p>${job.salary ? escapeHtml(job.salary) : 'No especificado'}</p>
+                </div>
+                <div class="modal-info-item">
+                    <label>Plataforma</label>
+                    <p>${(job.source || '').toUpperCase()}</p>
+                </div>
+            `;
+
+            const descSection = document.getElementById('modalDescription');
+            descSection.innerHTML = '<div class="loading-detail"><div class="spinner"></div>Cargando detalles de la oferta...</div>';
+
+            const dreamSection = document.getElementById('modalDreamAnswers');
+            dreamSection.innerHTML = '';
+
+            const actions = document.getElementById('modalActions');
+            actions.innerHTML = `
+                <a href="${job.url}" target="_blank" style="background:#667eea;color:white;">🌐 Ver en ${(job.source||'').toUpperCase()}</a>
+                <button onclick="generateCV('${job.id}')" style="background:#43a047;color:white;">📄 Generar CV</button>
+                <button onclick="window.open('${job.url}','_blank')" style="background:#ff9800;color:white;">🚀 Postular</button>
+            `;
+
+            document.getElementById('jobModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+
+            fetchJobDetail(job.url, job);
+
+            if (scrollToApply) {
+                setTimeout(() => {
+                    const el = document.getElementById('modalDreamAnswers');
+                    if (el) el.scrollIntoView({behavior:'smooth'});
+                }, 1500);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('jobModal').classList.remove('open');
+            document.body.style.overflow = '';
+            currentModalJob = null;
+        }
+
+        async function fetchJobDetail(url, job) {
+            const descSection = document.getElementById('modalDescription');
+            try {
+                const resp = await fetch('/api/job-detail', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                const data = await resp.json();
+
+                if (data.success && data.detail) {
+                    const d = data.detail;
+                    let html = '';
+
+                    if (d.salary) {
+                        const salaryEl = document.querySelector('#modalInfoGrid .modal-info-item:nth-child(3) p');
+                        if (salaryEl && salaryEl.textContent === 'No especificado') {
+                            salaryEl.textContent = d.salary;
+                        }
+                    }
+
+                    if (d.modality) {
+                        html += `<h3>Modalidad</h3><p>${escapeHtml(d.modality)}</p>`;
+                    }
+
+                    if (d.description) {
+                        html += `<h3>Descripcion del puesto</h3><pre>${escapeHtml(d.description)}</pre>`;
+                    }
+
+                    if (d.requirements) {
+                        html += `<h3>Requisitos</h3><pre>${escapeHtml(d.requirements)}</pre>`;
+                    }
+
+                    if (!d.description && !d.requirements && d.raw_text) {
+                        html += `<h3>Informacion de la oferta</h3><pre>${escapeHtml(d.raw_text)}</pre>`;
+                    }
+
+                    if (!html) {
+                        html = `<h3>Detalles</h3><p>No se pudo extraer la descripcion completa. Haz clic en "Ver en ${(job.source||'').toUpperCase()}" para ver la oferta original.</p>`;
+                    }
+
+                    descSection.innerHTML = html;
+                } else {
+                    descSection.innerHTML = `<h3>Detalles</h3><p>No se pudo cargar los detalles. Visita la oferta directamente.</p>`;
+                }
+            } catch(e) {
+                descSection.innerHTML = `<h3>Detalles</h3><p>Error cargando detalles. Visita la oferta directamente.</p>`;
+            }
+
+            generateDreamAnswers(job);
+        }
+
+        function generateDreamAnswers(job) {
+            const container = document.getElementById('modalDreamAnswers');
+            const t = (job.title || '').toLowerCase();
+            const cat = job.category || 'otro';
+
+            let profileDesc = '';
+            let whyMe = '';
+            let experience = '';
+            let skills = '';
+
+            if (cat === 'data' || t.includes('data') || t.includes('analista') || t.includes('bi')) {
+                profileDesc = 'Estudiante de 8vo ciclo de Ingenieria de Sistemas en la UPC con experiencia practica en Data Intelligence en B. Braun Medical Peru, donde diseñe dashboards en Power BI, administre datos en Salesforce y automatice flujos con Power Automate.';
+                whyMe = 'Cuento con experiencia directa en analisis de datos y business intelligence. En B. Braun Medical logre una mejora del 60% en visibilidad de KPIs y optimize la toma de decisiones en un 70% mediante reportes personalizados en Salesforce. Manejo Power BI a nivel intermedio-avanzado y Excel avanzado.';
+                experience = 'Practicante de Data Intelligence en B. Braun Medical Peru (Oct 2025 - Mar 2026): dashboards Power BI, reportes Salesforce, automatizacion con Power Automate. Voluntaria en ENTRECONDUCTAS: analisis de datos educativos y dashboards Power BI.';
+                skills = 'Power BI (intermedio-avanzado), Excel (avanzado), SQL, Power Automate, SAP, Python para Data Science (certificacion IBM).';
+            } else if (cat === 'frontend' || t.includes('frontend') || t.includes('react') || t.includes('web')) {
+                profileDesc = 'Estudiante de 8vo ciclo de Ingenieria de Sistemas en la UPC con experiencia en desarrollo web. Desarrolle la pagina web de AESI como voluntaria y colabore en proyectos full stack. Ganadora de beca Mujeres en Ciencia de PRONABEC.';
+                whyMe = 'Tengo experiencia practica en desarrollo web, habiendo creado la primera version de la pagina web de AESI. Ademas, colabore en desarrollo backend con Spring Boot, lo que me da vision completa del stack. Soy proactiva, organizada y trabajo bien en equipo usando Scrum.';
+                experience = 'Voluntaria de tecnologia en AESI (Ene-Mar 2025): desarrollo de pagina web. Colaboradora en Influyo Corp (Feb-Ago 2025): desarrollo backend con Spring Boot y Java, resolucion de 30+ bugs.';
+                skills = 'HTML, CSS, JavaScript, UX, Java, Spring Boot, PostgreSQL, SQL, Git, metodologia Scrum.';
+            } else if (cat === 'backend' || t.includes('backend') || t.includes('java') || t.includes('python') || t.includes('spring')) {
+                profileDesc = 'Estudiante de 8vo ciclo de Ingenieria de Sistemas en la UPC con experiencia en desarrollo backend con Spring Boot y Java en Influyo Corp, donde identifique y solucione mas de 30 bugs criticos e implemente servicios escalables.';
+                whyMe = 'Tengo experiencia directa en desarrollo backend con Spring Boot y Java. En Influyo Corp trabaje 6 meses implementando servicios escalables, resolviendo bugs criticos y participando en sprints Scrum. Tambien manejo PostgreSQL, SQL y tengo certificaciones en Python.';
+                experience = 'Colaborador en Influyo Corp (Feb-Ago 2025): servicios backend con Spring Boot y Java, 30+ bugs resueltos, metodologia Scrum. Practicante en Total Weight & Systems: mantenimiento de base de datos, desarrollo de funcionalidad de seguimiento en tiempo real.';
+                skills = 'Java, Spring Boot, PostgreSQL, SQL, Python, Git, Scrum, Power Automate.';
+            } else {
+                profileDesc = 'Estudiante de 8vo ciclo de Ingenieria de Sistemas de Informacion en la UPC con experiencia en practicas de ingenieria de sistemas, data intelligence y desarrollo de software. Ganadora de beca Mujeres en Ciencia de PRONABEC.';
+                whyMe = 'Soy una profesional en formacion con experiencia diversa: data intelligence en B. Braun Medical, desarrollo backend en Influyo Corp, y gestion de sistemas en Total Weight & Systems. Me adapto rapidamente y busco aprender continuamente.';
+                experience = 'Practicante Data Intelligence en B. Braun Medical (Oct 2025 - Mar 2026). Colaboradora Backend en Influyo Corp (Feb-Ago 2025). Practicante de Sistemas en Total Weight & Systems (Ene-Abr 2025). Voluntaria tecnologica en ENTRECONDUCTAS y AESI.';
+                skills = 'Java, Spring Boot, Power BI, Excel, SQL, PostgreSQL, Python, Power Automate, SAP, Scrum, UX.';
+            }
+
+            const questions = [
+                { q: 'Cuentanos sobre ti / Perfil profesional', a: profileDesc },
+                { q: 'Por que deberiamos contratarte?', a: whyMe },
+                { q: 'Describe tu experiencia relevante', a: experience },
+                { q: 'Cuales son tus principales habilidades?', a: skills },
+                { q: 'Por que te interesa este puesto?', a: `Me interesa esta posicion de "${job.title}" porque se alinea con mi formacion en Ingenieria de Sistemas y mi experiencia practica. Busco una oportunidad donde pueda aplicar mis conocimientos y seguir creciendo profesionalmente en un equipo colaborativo.` },
+                { q: 'Cual es tu disponibilidad?', a: 'Tengo disponibilidad inmediata. Puedo trabajar de forma remota o presencial segun se requiera. Actualmente curso el 8vo ciclo de Ingenieria de Sistemas en la UPC y puedo coordinar horarios compatibles.' },
+                { q: 'Cuales son tus pretensiones salariales?', a: 'Estoy abierta a negociar segun el rango que manejen para esta posicion. Mi prioridad es encontrar una oportunidad donde pueda crecer profesionalmente y aportar valor.' }
+            ];
+
+            container.innerHTML = `
+                <div class="dream-answers">
+                    <h4>🤖 Dream - Respuestas sugeridas para la postulacion</h4>
+                    <p style="font-size:12px;color:#666;margin-bottom:12px;">Estas respuestas estan basadas en tu experiencia. Copialas y pegalas en el formulario de postulacion.</p>
+                    ${questions.map((q, i) => `
+                        <div class="dream-answer-item">
+                            <button class="copy-btn" onclick="copyAnswer(${i})">📋 Copiar</button>
+                            <div class="q">${q.q}</div>
+                            <div class="a" id="answer_${i}">${q.a}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function copyAnswer(idx) {
+            const el = document.getElementById('answer_' + idx);
+            if (el) {
+                navigator.clipboard.writeText(el.textContent).then(() => {
+                    const btns = document.querySelectorAll('.copy-btn');
+                    if (btns[idx]) {
+                        btns[idx].textContent = '✅ Copiado!';
+                        setTimeout(() => btns[idx].textContent = '📋 Copiar', 2000);
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
 
         // ---- CV GENERATOR ----
         const CV_DATA = {
