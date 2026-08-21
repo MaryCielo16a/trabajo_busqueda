@@ -443,6 +443,42 @@
             font-weight: 600;
             margin-right: 4px;
         }
+        .btn-hide {
+            background: none;
+            color: #999;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .btn-hide:hover {
+            background: #fee;
+            color: #c62828;
+            border-color: #c62828;
+        }
+        .job-hidden {
+            opacity: 0.5;
+            border-left: 4px solid #ccc;
+        }
+        .relevance-high {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        .relevance-mid {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
 
         /* Job Detail Modal */
         .modal-overlay {
@@ -1596,6 +1632,51 @@
             return !!getAppliedJobs()[jobId];
         }
 
+        function getHiddenJobs() {
+            try {
+                return JSON.parse(localStorage.getItem('hidden_jobs') || '{}');
+            } catch { return {}; }
+        }
+
+        function hideJob(jobId) {
+            const hidden = getHiddenJobs();
+            hidden[jobId] = true;
+            localStorage.setItem('hidden_jobs', JSON.stringify(hidden));
+            renderJobs();
+        }
+
+        let showHidden = false;
+
+        function toggleShowHidden() {
+            showHidden = !showHidden;
+            renderJobs();
+        }
+
+        function getJobRelevance(job) {
+            const cvd = getCVData();
+            const skillKeys = cvd.skills ? Object.keys(cvd.skills).map(s => s.toLowerCase()) : [];
+            const interests = (cvd.interests || []).map(s => s.toLowerCase());
+            const certTags = (cvd.certifications || []).flatMap(c => (c.tags || []).map(t => t.toLowerCase()));
+            const allKeywords = [...skillKeys, ...interests, ...certTags];
+
+            const title = (job.title || '').toLowerCase();
+            const company = (job.company || '').toLowerCase();
+            const cat = job.category || '';
+
+            let score = 0;
+            for (const kw of allKeywords) {
+                if (title.includes(kw)) score += 3;
+                if (company.includes(kw)) score += 1;
+            }
+
+            const relevantCats = ['frontend', 'backend', 'data', 'fullstack'];
+            if (relevantCats.includes(cat)) score += 2;
+
+            if (job.is_remote) score += 1;
+
+            return score;
+        }
+
         function storeJobs(newJobs) {
             const existing = getStoredJobs();
             const ids = new Set(existing.map(j => j.id));
@@ -1661,6 +1742,12 @@
         function renderJobs() {
             const remoteOnly = document.getElementById('remoteOnly').checked;
             let jobs = getStoredJobs();
+            const hiddenMap = getHiddenJobs();
+            const hiddenCount = jobs.filter(j => hiddenMap[j.id]).length;
+
+            if (!showHidden) {
+                jobs = jobs.filter(j => !hiddenMap[j.id]);
+            }
 
             if (remoteOnly) {
                 jobs = jobs.filter(j => j.is_remote);
@@ -1672,10 +1759,24 @@
                 jobs = jobs.filter(j => (j.category || 'otro') === activeCategory);
             }
 
-            jobs.sort((a, b) => (b.scraped_date || '').localeCompare(a.scraped_date || ''));
+            jobs.sort((a, b) => {
+                const relA = getJobRelevance(a);
+                const relB = getJobRelevance(b);
+                if (relB !== relA) return relB - relA;
+                return (b.scraped_date || '').localeCompare(a.scraped_date || '');
+            });
 
             const jobsList = document.getElementById('jobsList');
             const totalJobs = jobs.length;
+
+            let hiddenToggleHtml = '';
+            if (hiddenCount > 0) {
+                hiddenToggleHtml = `<div style="text-align:center;margin:8px 0">
+                    <button onclick="toggleShowHidden()" style="background:none;border:1px solid #ccc;border-radius:16px;padding:4px 14px;font-size:12px;color:#888;cursor:pointer">
+                        ${showHidden ? '🙈 Ocultar descartadas' : '👁 Ver ' + hiddenCount + ' oferta(s) descartada(s)'}
+                    </button>
+                </div>`;
+            }
 
             if (totalJobs === 0) {
                 jobsList.innerHTML = `
@@ -1683,6 +1784,7 @@
                         <p>📭 No hay ofertas aun</p>
                         <p style="font-size: 12px; margin-top: 10px;">Haz click en "Busqueda rapida" para comenzar</p>
                     </div>
+                    ${hiddenToggleHtml}
                 `;
                 return;
             }
@@ -1693,13 +1795,18 @@
             const pageJobs = jobs.slice(start, start + JOBS_PER_PAGE);
 
             const appliedMap = getAppliedJobs();
-            jobsList.innerHTML = pageJobs.map(job => {
+            jobsList.innerHTML = hiddenToggleHtml + pageJobs.map(job => {
                 const applied = !!appliedMap[job.id];
+                const hidden = !!hiddenMap[job.id];
+                const relevance = getJobRelevance(job);
+                const relLabel = relevance >= 5 ? '<span class="relevance-high">★ Alta relevancia</span>' :
+                                 relevance >= 2 ? '<span class="relevance-mid">● Relevante</span>' : '';
                 return `
-                <div class="job-card ${applied ? 'job-applied' : ''}">
+                <div class="job-card ${applied ? 'job-applied' : ''} ${hidden ? 'job-hidden' : ''}">
                     <div class="job-card-header">
                         <div class="job-title">${applied ? '✅ ' : ''}${escapeHtml(job.title || '')}</div>
                         <div>
+                            ${relLabel}
                             ${applied ? '<span class="badge-applied">Postulado</span>' : ''}
                             <span class="badge" style="margin-right:4px">${CATEGORY_LABELS[job.category] || 'Otro'}</span>
                             <span class="job-source source-${job.source || ''}">${(job.source || '').toUpperCase()}</span>
@@ -1722,6 +1829,7 @@
                         <button class="btn-cv" onclick="event.stopPropagation(); generateCV('${job.id}')">📄 Generar CV</button>
                         <button class="btn-apply" onclick="event.stopPropagation(); openJobDetail('${job.id}', true)">🚀 Postular</button>
                         <button class="${applied ? 'btn-unapply' : 'btn-mark-applied'}" onclick="event.stopPropagation(); markAsApplied('${job.id}')">${applied ? '↩ Desmarcar' : '✅ Marcar postulado'}</button>
+                        ${!applied ? `<button class="btn-hide" onclick="event.stopPropagation(); hideJob('${job.id}')">✕ No me interesa</button>` : ''}
                     </div>
                 </div>`;
             }).join('');
