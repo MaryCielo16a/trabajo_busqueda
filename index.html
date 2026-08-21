@@ -2755,29 +2755,54 @@
                 date = dates[0];
             }
 
-            const skipPatterns = /^(certificate|certificado|certifica|otorga|award|completion|verify|verifica|credential|issued|emitido|fecha|date|name|nombre|id:|this is to|has completed|ha completado|se certifica|se otorga|hereby|por la presente|congratulations|felicitaciones)/i;
-            const certNameRegex = /\b(course|curso|program|programa|specialization|especializacion|professional|introduction|introduccion|fundamentos|foundations|advanced|avanzado|basico|basic|development|desarrollo|analisis|analysis|machine learning|deep learning)\b/i;
+            const skipPatterns = /^(certificate|certificado|certifica|otorga|award|completion|verify|verifica|credential|issued|emitido|fecha|date|name|nombre|id:|this is to|has completed|ha completado|se certifica|se otorga|hereby|por la presente|congratulations|felicitaciones|aprobado|approved|horas de|hours of|certificacion de|por participar)/i;
+            const rolePatterns = /\b(founder|ceo|cto|coo|director|presidente|rector|decano|dean|instructor|profesor|teacher|coach)\b/i;
+            const certNameRegex = /\b(course|curso|program|programa|specialization|especializacion|professional|introduction|introduccion|fundamentos|foundations|advanced|avanzado|basico|basic|development|desarrollo|analisis|analysis|machine learning|deep learning|taller|workshop|diplomado|bootcamp)\b/i;
             const platformNames = ['coursera', 'udemy', 'edx', 'platzi', 'linkedin', 'google', 'microsoft', 'amazon', 'aws', 'oracle', 'cisco', 'harvard', 'mit', 'stanford', 'crehana', 'domestika', 'alura'];
+
+            // Pre-process: merge "CURSO DE" or "PROGRAM:" type lines with next line
+            for (let i = 0; i < lines.length - 1; i++) {
+                const l = lines[i].trim();
+                if (/^(curso de|course:|programa de|program:|taller de|diplomado en|especialización en|specialization:)\s*$/i.test(l) ||
+                    /^(curso de|course|programa|program|taller|diplomado)\s*$/i.test(l)) {
+                    lines[i] = l + ' ' + lines[i+1].trim();
+                    lines.splice(i+1, 1);
+                }
+            }
+
+            // Find person name line (after "certifica a" or similar)
+            const skipNextLineAfter = /certifica a|awarded to|otorgado a|granted to|nombre:/i;
+            const personLines = new Set();
+            for (let i = 0; i < lines.length; i++) {
+                if (skipNextLineAfter.test(lines[i]) && i + 1 < lines.length) {
+                    personLines.add(i + 1);
+                }
+            }
 
             let bestLine = '';
             let bestScore = -1;
-            for (const line of lines) {
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
                 const lower = line.toLowerCase();
                 if (line.length < 4 || line.length > 200) continue;
                 if (skipPatterns.test(line)) continue;
                 if (/^(id|ref|credential|www\.|http|[0-9a-f]{8,})/i.test(line)) continue;
                 if (/^\d+$/.test(line.replace(/\s/g, ''))) continue;
+                if (rolePatterns.test(line)) continue;
+                if (personLines.has(i)) continue;
 
                 let score = 0;
                 score += Math.min(line.length / 10, 3);
-                if (certNameRegex.test(line)) score += 4;
+                if (certNameRegex.test(line)) score += 5;
                 if (/[A-Z]/.test(line[0])) score += 1;
                 if (dates.some(d => line.includes(d))) score -= 3;
                 if (lower.includes('@') || lower.includes('.com') || lower.includes('.org')) score -= 5;
+                if (/https?:\/\//.test(line)) score -= 5;
                 const wordCount = line.split(/\s+/).length;
-                if (wordCount >= 3 && wordCount <= 12) score += 3;
-                if (wordCount === 1) score -= 2;
-                if (platformNames.some(p => lower === p)) score -= 3;
+                if (wordCount >= 2 && wordCount <= 8) score += 3;
+                if (wordCount === 1 && line.length < 20) score -= 1;
+                if (platformNames.some(p => lower === p || lower === p + '.')) score -= 4;
+                if (/^\d+\s*(horas|hours|hrs)/.test(lower)) score -= 5;
 
                 if (score > bestScore) {
                     bestScore = score;
