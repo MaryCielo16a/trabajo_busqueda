@@ -2671,6 +2671,15 @@
                 status.textContent = 'Extrayendo datos...';
                 bar.style.width = '90%';
 
+                console.log('OCR text:', text);
+
+                if (!text || text.trim().length < 5) {
+                    bar.style.width = '100%';
+                    status.textContent = 'No se pudo leer texto de la imagen. Intenta con una foto mas clara o llena manualmente.';
+                    setTimeout(() => progress.classList.remove('active'), 5000);
+                    return;
+                }
+
                 const parsed = parseCertificateText(text);
 
                 if (parsed.name) document.getElementById('pf_name').value = parsed.name;
@@ -2678,8 +2687,14 @@
                 if (parsed.tags) document.getElementById('pf_tags').value = parsed.tags;
 
                 bar.style.width = '100%';
-                status.textContent = 'Datos extraidos. Revisa y edita si es necesario.';
-                setTimeout(() => progress.classList.remove('active'), 3000);
+
+                if (!parsed.name && !parsed.date) {
+                    const preview = text.replace(/\n/g, ' ').substring(0, 200);
+                    status.innerHTML = `No se identificaron datos claros. Texto detectado:<br><i style="font-size:11px;color:#666">"${preview}..."</i><br>Copia lo que necesites manualmente.`;
+                } else {
+                    status.textContent = 'Datos extraidos! Revisa y edita si es necesario.';
+                    setTimeout(() => progress.classList.remove('active'), 4000);
+                }
             } catch(e) {
                 console.error('OCR Error:', e);
                 status.textContent = 'Error: ' + e.message + '. Llena el formulario manualmente.';
@@ -2689,36 +2704,47 @@
         }
 
         function parseCertificateText(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+            const cleanText = text.replace(/\r/g, '');
+            const lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
             let name = '';
             let date = '';
             let tags = '';
 
-            const dateRegex = /(\d{1,2}[\s\/\-\.]\s*(de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*(de\s+)?\d{2,4}|\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4}\b|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/gi;
-            const dates = text.match(dateRegex) || [];
+            const dateRegex = /(\d{1,2}[\s\/\-\.]\s*(de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*(de\s+)?\d{2,4}|\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|january|february|march|april|may|june|july|august|september|october|november|december)\s*,?\s*\d{4}\b|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/gi;
+            let dates = text.match(dateRegex) || [];
+
+            if (dates.length === 0) {
+                const yearMatch = text.match(/\b(20[1-9]\d)\b/g);
+                if (yearMatch) dates = yearMatch;
+            }
 
             if (dates.length >= 2) {
-                date = dates[0] + ' – ' + dates[1];
+                date = dates[0] + ' – ' + dates[dates.length - 1];
             } else if (dates.length === 1) {
                 date = dates[0];
             }
 
-            const skipWords = ['certificate', 'certificado', 'certifica', 'otorga', 'award', 'completion', 'verify', 'verifica', 'credential', 'issued', 'emitido', 'fecha', 'date', 'name', 'nombre', 'id:', 'course', 'this is to'];
-            const certNameKeywords = ['course', 'curso', 'program', 'programa', 'specialization', 'especializacion', 'professional'];
+            const skipPatterns = /^(certificate|certificado|certifica|otorga|award|completion|verify|verifica|credential|issued|emitido|fecha|date|name|nombre|id:|this is to|has completed|ha completado|se certifica|se otorga|hereby|por la presente|congratulations|felicitaciones)/i;
+            const certNameKeywords = ['course', 'curso', 'program', 'programa', 'specialization', 'especializacion', 'professional', 'introduction', 'fundamentos', 'foundations', 'advanced', 'avanzado', 'basico', 'basic'];
 
             let bestLine = '';
             let bestScore = -1;
             for (const line of lines) {
                 const lower = line.toLowerCase();
-                if (line.length < 5 || line.length > 150) continue;
-                if (skipWords.some(w => lower.startsWith(w))) continue;
-                if (/^(id|ref|credential|www\.|http)/i.test(line)) continue;
+                if (line.length < 4 || line.length > 200) continue;
+                if (skipPatterns.test(line)) continue;
+                if (/^(id|ref|credential|www\.|http|[0-9a-f]{8,})/i.test(line)) continue;
+                if (/^\d+$/.test(line.replace(/\s/g, ''))) continue;
 
-                let score = line.length > 15 ? 2 : 0;
-                if (certNameKeywords.some(w => lower.includes(w))) score += 3;
+                let score = 0;
+                score += Math.min(line.length / 10, 3);
+                if (certNameKeywords.some(w => lower.includes(w))) score += 4;
                 if (/[A-Z]/.test(line[0])) score += 1;
-                if (dates.some(d => line.includes(d))) score -= 5;
-                if (/^\d+$/.test(line)) score -= 5;
+                if (/[A-Z]{2,}/.test(line)) score += 1;
+                if (dates.some(d => line.includes(d))) score -= 3;
+                if (lower.includes('@') || lower.includes('.com') || lower.includes('.org')) score -= 5;
+                const wordCount = line.split(/\s+/).length;
+                if (wordCount >= 3 && wordCount <= 12) score += 2;
 
                 if (score > bestScore) {
                     bestScore = score;
