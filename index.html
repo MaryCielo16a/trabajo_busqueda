@@ -2731,7 +2731,7 @@
                 }
 
                 status.textContent = 'Extrayendo datos...';
-                bar.style.width = '90%';
+                bar.style.width = '85%';
 
                 console.log('OCR text:', text);
 
@@ -2742,16 +2742,40 @@
                     return;
                 }
 
-                const parsed = parseCertificateText(text);
+                // Try AI parsing first
+                let aiSuccess = false;
+                try {
+                    status.textContent = 'Dream esta analizando el certificado...';
+                    bar.style.width = '90%';
+                    const aiResp = await fetch('/api/parse-cert', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({text: text})
+                    });
+                    const aiData = await aiResp.json();
+                    if (aiData.success && aiData.name) {
+                        document.getElementById('pf_name').value = aiData.name;
+                        if (aiData.date) document.getElementById('pf_date').value = aiData.date;
+                        if (aiData.tags) document.getElementById('pf_tags').value = aiData.tags;
+                        bar.style.width = '100%';
+                        status.textContent = 'Dream extrajo los datos! Revisa y edita si es necesario.';
+                        aiSuccess = true;
+                        setTimeout(() => progress.classList.remove('active'), 4000);
+                    }
+                } catch(aiErr) {
+                    console.log('AI parse unavailable, using local parser');
+                }
 
-                if (parsed.date) document.getElementById('pf_date').value = parsed.date;
-                if (parsed.tags) document.getElementById('pf_tags').value = parsed.tags;
+                if (!aiSuccess) {
+                    const parsed = parseCertificateText(text);
+                    if (parsed.date) document.getElementById('pf_date').value = parsed.date;
+                    if (parsed.tags) document.getElementById('pf_tags').value = parsed.tags;
+                    bar.style.width = '100%';
 
-                bar.style.width = '100%';
-
-                const rawLines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-                const selectorLines = buildSelectorLines(rawLines);
-                showCertLineSelector(selectorLines, parsed.name || '');
+                    const rawLines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+                    const selectorLines = buildSelectorLines(rawLines);
+                    showCertLineSelector(selectorLines, parsed.name || '');
+                }
             } catch(e) {
                 console.error('OCR Error:', e);
                 status.textContent = 'Error: ' + e.message + '. Llena el formulario manualmente.';

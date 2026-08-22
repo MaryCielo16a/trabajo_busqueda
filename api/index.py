@@ -964,6 +964,70 @@ class handler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
 
+        elif path == "/api/parse-cert":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                ocr_text = body.get("text", "")
+                if not ocr_text:
+                    self._json_response(400, {"success": False, "error": "No text provided"})
+                    return
+
+                groq_key = os.environ.get("GROQ_API_KEY", "")
+                if not groq_key:
+                    self._json_response(200, {"success": False, "error": "GROQ_API_KEY not configured"})
+                    return
+
+                prompt = f"""Analiza este texto extraído de un certificado/diploma y extrae la información en formato JSON.
+El texto puede tener errores de OCR. Identifica:
+- "name": el nombre del curso, programa o certificación (NO el nombre de la persona ni de la institución)
+- "institution": la institución que otorga el certificado (ej: Platzi, Coursera, Udemy, universidad)
+- "date": la fecha o periodo del certificado
+- "tags": lista de tags relevantes para búsqueda laboral, solo de estos: data, python, excel, frontend, backend, cloud, marketing, liderazgo, mobile, devops, qa, design
+
+Texto del certificado:
+\"\"\"
+{ocr_text[:2000]}
+\"\"\"
+
+Responde SOLO con el JSON, sin explicaciones ni markdown:"""
+
+                resp = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "llama-3.1-8b-instant",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0.1,
+                        "max_tokens": 300
+                    },
+                    timeout=10
+                )
+
+                if resp.status_code == 200:
+                    ai_text = resp.json()["choices"][0]["message"]["content"].strip()
+                    ai_text = ai_text.replace("```json", "").replace("```", "").strip()
+                    parsed = json.loads(ai_text)
+                    tags = parsed.get("tags", [])
+                    if isinstance(tags, list):
+                        tags = ", ".join(tags)
+                    self._json_response(200, {
+                        "success": True,
+                        "name": parsed.get("name", ""),
+                        "institution": parsed.get("institution", ""),
+                        "date": parsed.get("date", ""),
+                        "tags": tags
+                    })
+                else:
+                    self._json_response(200, {"success": False, "error": f"Groq API error: {resp.status_code}"})
+            except json.JSONDecodeError:
+                self._json_response(200, {"success": True, "name": "", "date": "", "tags": "", "error": "Could not parse AI response"})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
         else:
             self._json_response(404, {"success": False, "error": "Not found"})
 
