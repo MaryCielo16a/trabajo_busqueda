@@ -1028,6 +1028,99 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
 
+        elif path == "/api/review-cv":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                cv_text = body.get("cv_text", "")
+                job_summary = body.get("job_summary", "")
+
+                if not cv_text:
+                    self._json_response(400, {"success": False, "error": "No CV text provided"})
+                    return
+
+                groq_key = os.environ.get("GROQ_API_KEY", "")
+                if not groq_key:
+                    self._json_response(200, {"success": False, "error": "GROQ_API_KEY not configured", "fallback": True})
+                    return
+
+                cv_text = cv_text[:3000]
+                job_summary = job_summary[:1000]
+
+                system_prompt = """Eres un reclutador senior de Recursos Humanos en Latinoamerica con 15 anos de experiencia revisando CVs para posiciones de tecnologia.
+
+Recibes el perfil COMPLETO de un candidato y una oferta laboral. Tu trabajo es:
+1. Seleccionar que experiencia, certificaciones y habilidades son RELEVANTES para este puesto especifico
+2. Generar un resumen profesional adaptado al puesto
+3. Dar feedback para mejorar el CV
+
+Devuelve SOLO un JSON con esta estructura exacta:
+{
+  "score": <1-10>,
+  "titulo_sugerido": "<titulo profesional que coincida con el puesto>",
+  "perfil_profesional": "<resumen de 2-3 lineas adaptado al puesto, destacando experiencia relevante>",
+  "experiencia_incluir": ["<titulo exacto de cada experiencia/actividad relevante>"],
+  "experiencia_excluir": ["<titulo exacto de cada experiencia/actividad NO relevante>"],
+  "certs_incluir": ["<nombre exacto de cada certificacion relevante>"],
+  "certs_excluir": ["<nombre exacto de cada certificacion NO relevante>"],
+  "skills_incluir": ["<nombre exacto de cada habilidad relevante>"],
+  "skills_excluir": ["<nombre exacto de cada habilidad NO relevante>"],
+  "alineamiento": ["<observacion sobre alineacion titulo-habilidades-puesto>"],
+  "estructura": ["<problema de formato o seccion faltante>"],
+  "mejoras": ["<accion concreta y especifica para mejorar>"]
+}
+
+Reglas:
+- Usa los NOMBRES EXACTOS del perfil del candidato para incluir/excluir (copia el titulo tal cual)
+- Incluye TODA experiencia que tenga alguna relacion con el puesto, aunque sea indirecta
+- Excluye experiencia claramente irrelevante (ej: voluntariado de animales para puesto de programacion)
+- El perfil_profesional debe mencionar logros cuantificables si los hay
+- El titulo_sugerido debe coincidir con el nombre del puesto al que postula
+- Maximo 3 items en alineamiento, estructura y mejoras
+- Responde SOLO con el JSON, sin markdown ni explicaciones"""
+
+                user_prompt = f"""Perfil completo del candidato:
+\"\"\"
+{cv_text}
+\"\"\"
+
+Oferta laboral:
+\"\"\"
+{job_summary}
+\"\"\""""
+
+                resp = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "llama-3.1-8b-instant",
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        "temperature": 0.3,
+                        "max_tokens": 2000
+                    },
+                    timeout=20
+                )
+
+                if resp.status_code == 200:
+                    ai_text = resp.json()["choices"][0]["message"]["content"].strip()
+                    ai_text = ai_text.replace("```json", "").replace("```", "").strip()
+                    review = json.loads(ai_text)
+                    self._json_response(200, {"success": True, "review": review})
+                elif resp.status_code == 429:
+                    self._json_response(200, {"success": False, "error": "Limite de uso alcanzado. Intenta en un minuto.", "fallback": True})
+                else:
+                    self._json_response(200, {"success": False, "error": f"Groq API error: {resp.status_code}"})
+            except json.JSONDecodeError:
+                self._json_response(200, {"success": False, "error": "No se pudo interpretar la respuesta de la IA", "fallback": True})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
         else:
             self._json_response(404, {"success": False, "error": "Not found"})
 

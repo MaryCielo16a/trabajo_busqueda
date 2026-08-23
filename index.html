@@ -3171,19 +3171,111 @@
             return ordered;
         }
 
-        function generateCV(jobId) {
+        function condenseCVForReview(cvd, profileTitle) {
+            let t = `TITULO: ${profileTitle}\nNOMBRE: ${cvd.name}\n\nFORMACION:\n`;
+            cvd.education.forEach(e => { t += `- ${e.title} (${e.date})\n`; });
+            t += `\nCERTIFICACIONES:\n`;
+            cvd.certifications.forEach(c => { t += `- ${c.name} (${c.date}) [tags: ${(c.tags||[]).join(', ')}]\n`; });
+            t += `\nEXPERIENCIA LABORAL:\n`;
+            cvd.experience.forEach(e => {
+                t += `- ${e.title} en ${e.company} (${e.date}) [tags: ${(e.tags||[]).join(', ')}]\n`;
+                e.roles.forEach(r => { t += `  * ${r}\n`; });
+            });
+            t += `\nACTIVIDADES EXTRACURRICULARES:\n`;
+            cvd.extracurricular.forEach(e => {
+                t += `- ${e.title}${e.company ? ' en ' + e.company : ''} (${e.date}) [tags: ${(e.tags||[]).join(', ')}]\n`;
+                e.roles.forEach(r => { t += `  * ${r}\n`; });
+            });
+            t += `\nHABILIDADES:\n`;
+            Object.entries(cvd.skills).forEach(([k, v]) => { t += `- ${k}: ${v || 'no especificado'}\n`; });
+            t += `\nIDIOMAS: ${cvd.languages.join(', ')}\n`;
+            t += `INTERESES: ${cvd.interests.join(', ')}\n`;
+            return t.substring(0, 3000);
+        }
+
+        function condenseJobForReview(job) {
+            let t = `Puesto: ${job.title}\n`;
+            t += `Empresa: ${job.company || 'No especificada'}\n`;
+            t += `Categoria: ${CATEGORY_LABELS[job.category] || 'Otro'}\n`;
+            t += `Ubicacion: ${job.is_remote ? 'Remoto' : (job.location || 'No especificada')}\n`;
+            if (job.description) t += `Descripcion: ${job.description.substring(0, 500)}\n`;
+            return t.substring(0, 1000);
+        }
+
+        function filterByAIReview(items, includeList, field) {
+            if (!includeList || !includeList.length) return items;
+            return items.filter(item => {
+                const val = (item[field] || '').toLowerCase();
+                return includeList.some(inc => {
+                    const incL = inc.toLowerCase();
+                    return val.includes(incL) || incL.includes(val);
+                });
+            });
+        }
+
+        function filterSkillsByAI(skills, includeList) {
+            if (!includeList || !includeList.length) return skills;
+            return skills.filter(([k]) => {
+                const kl = k.toLowerCase();
+                return includeList.some(inc => {
+                    const incL = inc.toLowerCase();
+                    return kl.includes(incL) || incL.includes(kl);
+                });
+            });
+        }
+
+        async function generateCV(jobId) {
             const jobs = getStoredJobs();
             const job = jobs.find(j => j.id === jobId);
             if (!job) { alert('Oferta no encontrada'); return; }
 
             const cvd = getCVData();
-            const profileTitle = getJobProfileTitle(job);
+            let profileTitle = getJobProfileTitle(job);
             const relevantTags = getRelevantTags(job);
-            const sortedCerts = sortByRelevance(cvd.certifications, relevantTags);
-            const sortedExp = sortByRelevance(cvd.experience, relevantTags);
-            const sortedExtra = sortByRelevance(cvd.extracurricular, relevantTags);
-            const skills = getRelevantSkills(job);
+            let sortedCerts = sortByRelevance(cvd.certifications, relevantTags);
+            let sortedExp = sortByRelevance(cvd.experience, relevantTags);
+            let sortedExtra = sortByRelevance(cvd.extracurricular, relevantTags);
+            let skills = getRelevantSkills(job);
             const interests = getRelevantInterests(job);
+
+            const condensedCV = condenseCVForReview(cvd, profileTitle);
+            const condensedJob = condenseJobForReview(job);
+
+            const w = window.open('', '_blank');
+            w.document.write(`<!DOCTYPE html><html><head><title>Generando CV...</title><style>
+body{font-family:Calibri,'Segoe UI',Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f2ff;margin:0;}
+.loader{text-align:center;color:#1a1a2e;}
+.spinner{width:48px;height:48px;border:4px solid #667eea;border-top-color:transparent;border-radius:50%;animation:s .8s linear infinite;margin:0 auto 16px;}
+@keyframes s{to{transform:rotate(360deg)}}
+</style></head><body><div class="loader"><div class="spinner"></div><h2>Generando CV optimizado con IA...</h2><p style="color:#666">Analizando tu perfil para: ${escapeHtml(job.title)}</p></div></body></html>`);
+
+            let aiReview = null;
+            let perfilProfesional = '';
+            try {
+                const resp = await fetch('/api/review-cv', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cv_text: condensedCV, job_summary: condensedJob })
+                });
+                const data = await resp.json();
+                if (data.success && data.review) {
+                    aiReview = data.review;
+                    if (aiReview.titulo_sugerido) profileTitle = aiReview.titulo_sugerido;
+                    if (aiReview.perfil_profesional) perfilProfesional = aiReview.perfil_profesional;
+                    if (aiReview.experiencia_incluir && aiReview.experiencia_incluir.length) {
+                        sortedExp = filterByAIReview(sortedExp, aiReview.experiencia_incluir, 'title');
+                        sortedExtra = filterByAIReview(sortedExtra, aiReview.experiencia_incluir, 'title');
+                    }
+                    if (aiReview.certs_incluir && aiReview.certs_incluir.length) {
+                        sortedCerts = filterByAIReview(sortedCerts, aiReview.certs_incluir, 'name');
+                    }
+                    if (aiReview.skills_incluir && aiReview.skills_incluir.length) {
+                        skills = filterSkillsByAI(skills, aiReview.skills_incluir);
+                    }
+                }
+            } catch(e) { /* fallback: use all data */ }
+
+            const reviewJSON = JSON.stringify(aiReview);
 
             const html = `<!DOCTYPE html>
 <html lang="es">
@@ -3214,10 +3306,24 @@ body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; col
 .cv-interests { font-size: 10pt; color: #444; }
 .cv-languages { font-size: 10pt; }
 .cv-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 1px 8px; border-radius: 10px; font-size: 9pt; font-weight: bold; margin-left: 8px; }
+.cv-summary { font-size: 10pt; color: #444; text-align: center; margin-bottom: 14px; line-height: 1.5; padding: 0 20px; }
 .no-print { text-align: center; margin-bottom: 20px; padding: 12px; background: #f0f2ff; border-radius: 8px; }
 .no-print button { padding: 10px 24px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin: 0 6px; }
 .no-print button:hover { background: #5568d3; }
+.no-print button:disabled { background: #aaa; cursor: not-allowed; }
 .no-print p { font-size: 12px; color: #666; margin-top: 6px; }
+.review-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #667eea; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.review-score { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; cursor: pointer; }
+.review-score.high { background: #e8f5e9; border-left: 4px solid #4caf50; }
+.review-score.mid { background: #fff3e0; border-left: 4px solid #ff9800; }
+.review-score.low { background: #ffebee; border-left: 4px solid #f44336; }
+.review-score-number { font-size: 28px; font-weight: bold; }
+.review-category { margin-bottom: 10px; padding: 10px 14px; background: #f8f9ff; border-radius: 6px; border-left: 3px solid #667eea; text-align: left; }
+.review-category h4 { margin: 0 0 6px; font-size: 13px; color: #1a1a2e; }
+.review-category ul { margin: 0; padding-left: 18px; }
+.review-category li { font-size: 12px; color: #444; margin-bottom: 4px; line-height: 1.4; }
+.review-ai-tag { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 8px; }
 @media print {
     body { padding: 12mm 15mm; }
     .no-print { display: none; }
@@ -3227,12 +3333,19 @@ body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; col
 <body>
 <div class="no-print">
     <button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
-    <p>CV adaptado para: <b>${escapeHtml(job.title)}</b> en <b>${escapeHtml(job.company || 'Empresa')}</b></p>
+    ${aiReview ? '' : '<button id="reviewBtn" onclick="requestReview()">🤖 Revisar CV con IA</button>'}
+    <p>CV adaptado para: <b>${escapeHtml(job.title)}</b> en <b>${escapeHtml(job.company || 'Empresa')}</b>
+    ${aiReview ? '<span class="review-ai-tag">✨ Optimizado con IA</span>' : ''}</p>
+    <div id="reviewPanel" style="${aiReview ? '' : 'display:none;'}">
+        <div id="reviewLoading" style="display:none;"><div class="review-spinner"></div> Analizando tu CV como lo haria un reclutador...</div>
+        <div id="reviewContent"></div>
+    </div>
 </div>
 
 <div class="cv-name">${cvd.name}</div>
 <div class="cv-title">${profileTitle}</div>
 <div class="cv-contact">${cvd.email} | ${cvd.phone} | ${cvd.linkedin}</div>
+${perfilProfesional ? `<div class="cv-summary">${perfilProfesional}</div>` : ''}
 
 <div class="cv-section">
     <div class="cv-section-title">Formacion Academica y Certificaciones</div>
@@ -3298,10 +3411,91 @@ body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; col
     ${cvd.languages.map(l => `<div class="cv-languages">${l}</div>`).join('')}
 </div>
 
+<script>
+var aiReviewData = ${reviewJSON};
+var reviewExpanded = false;
+
+if (aiReviewData) { renderReview(aiReviewData); }
+
+function renderReview(review) {
+    var content = document.getElementById('reviewContent');
+    var score = review.score || 0;
+    var level = score >= 7 ? 'high' : score >= 4 ? 'mid' : 'low';
+    var levelLabel = score >= 7 ? 'Buen ajuste al puesto' : score >= 4 ? 'Ajuste parcial' : 'Necesita mejoras';
+    var categories = [
+        { key: 'alineamiento', icon: '🎯', label: 'Alineamiento con el puesto' },
+        { key: 'estructura', icon: '📋', label: 'Estructura y formato' },
+        { key: 'mejoras', icon: '✅', label: 'Acciones de mejora' }
+    ];
+    var html = '<div class="review-score ' + level + '" onclick="toggleReviewDetails()">';
+    html += '<div class="review-score-number">' + score + '/10</div>';
+    html += '<div><div style="font-weight:bold;">' + levelLabel + '</div>';
+    html += '<div style="font-size:12px;color:#666;">Clic para ' + (reviewExpanded ? 'ocultar' : 'ver') + ' detalles</div></div></div>';
+    html += '<div id="reviewDetails" style="display:' + (reviewExpanded ? 'block' : 'none') + ';">';
+    for (var i = 0; i < categories.length; i++) {
+        var cat = categories[i];
+        var items = review[cat.key];
+        if (items && items.length > 0) {
+            html += '<div class="review-category"><h4>' + cat.icon + ' ' + cat.label + '</h4><ul>';
+            for (var j = 0; j < items.length; j++) { html += '<li>' + items[j] + '</li>'; }
+            html += '</ul></div>';
+        }
+    }
+    if (review.experiencia_excluir && review.experiencia_excluir.length) {
+        html += '<div class="review-category"><h4>🚫 Experiencia excluida (no relevante para este puesto)</h4><ul>';
+        for (var k = 0; k < review.experiencia_excluir.length; k++) { html += '<li>' + review.experiencia_excluir[k] + '</li>'; }
+        html += '</ul></div>';
+    }
+    html += '</div>';
+    content.innerHTML = html;
+}
+
+function toggleReviewDetails() {
+    reviewExpanded = !reviewExpanded;
+    var d = document.getElementById('reviewDetails');
+    if (d) d.style.display = reviewExpanded ? 'block' : 'none';
+}
+
+function requestReview() {
+    var btn = document.getElementById('reviewBtn');
+    var panel = document.getElementById('reviewPanel');
+    var loading = document.getElementById('reviewLoading');
+    var content = document.getElementById('reviewContent');
+    btn.disabled = true; btn.textContent = 'Analizando...';
+    panel.style.display = 'block'; loading.style.display = 'block'; content.innerHTML = '';
+    fetch('/api/review-cv', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ cv_text: ${JSON.stringify(condensedCV)}, job_summary: ${JSON.stringify(condensedJob)} })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        loading.style.display = 'none';
+        if (data.success && data.review) { renderReview(data.review); }
+        else if (data.fallback) { renderFallback(); content.innerHTML = '<p style="color:#c62828;margin-bottom:8px;">' + (data.error || '') + '</p>' + content.innerHTML; }
+        else { content.innerHTML = '<p style="color:#c62828;">Error: ' + (data.error || 'Error desconocido') + '</p>'; }
+        btn.disabled = false; btn.textContent = '🤖 Revisar CV con IA';
+    }).catch(function() {
+        loading.style.display = 'none'; renderFallback();
+        btn.disabled = false; btn.textContent = '🤖 Revisar CV con IA';
+    });
+}
+
+function renderFallback() {
+    var content = document.getElementById('reviewContent');
+    content.innerHTML = '<div class="review-category"><h4>📋 Checklist de revision manual</h4><ul>' +
+        '<li>¿El titulo del CV coincide con el puesto al que postulas?</li>' +
+        '<li>¿Incluiste un resumen profesional de 2-3 lineas al inicio?</li>' +
+        '<li>¿Tu experiencia mas reciente aparece primero?</li>' +
+        '<li>¿Tus habilidades estan agrupadas por categoria?</li>' +
+        '<li>¿Eliminaste contenido no relevante para esta oferta?</li>' +
+        '<li>¿Las certificaciones relevantes estan destacadas?</li>' +
+        '<li>¿Tu experiencia incluye logros cuantificables?</li>' +
+        '</ul></div>';
+}
+</script>
 </body>
 </html>`;
 
-            const w = window.open('', '_blank');
+            w.document.open();
             w.document.write(html);
             w.document.close();
         }
