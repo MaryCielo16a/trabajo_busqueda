@@ -2963,6 +2963,150 @@
             }
         }
 
+        async function processExtraFile(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const progress = document.getElementById('extraProgress');
+            const bar = document.getElementById('extraProgressBar');
+            const status = document.getElementById('extraProgressStatus');
+
+            progress.classList.add('active');
+            bar.style.width = '10%';
+            status.textContent = 'Preparando...';
+
+            try {
+                let text = '';
+                const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+                if (isPDF) {
+                    status.textContent = 'Leyendo PDF...';
+                    bar.style.width = '20%';
+
+                    if (typeof pdfjsLib === 'undefined') {
+                        status.textContent = 'Cargando lector PDF...';
+                        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+                    }
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                    status.textContent = 'Procesando PDF...';
+                    bar.style.width = '30%';
+
+                    const arrayBuf = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({data: arrayBuf}).promise;
+                    const maxPages = Math.min(pdf.numPages, 5);
+                    for (let i = 1; i <= maxPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        text += content.items.map(item => item.str).join(' ') + '\n';
+                    }
+
+                    if (!text || text.trim().length < 10) {
+                        status.textContent = 'PDF sin texto, aplicando OCR...';
+                        bar.style.width = '40%';
+
+                        if (typeof Tesseract === 'undefined') {
+                            await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+                        }
+
+                        const page = await pdf.getPage(1);
+                        const viewport = page.getViewport({scale: 2.0});
+                        const canvas = document.createElement('canvas');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+                        const ctx = canvas.getContext('2d');
+                        await page.render({canvasContext: ctx, viewport: viewport}).promise;
+
+                        status.textContent = 'Analizando imagen del PDF...';
+                        bar.style.width = '50%';
+
+                        const result = await Tesseract.recognize(canvas, 'spa+eng', {
+                            logger: m => {
+                                if (m.status === 'recognizing text') {
+                                    bar.style.width = (50 + m.progress * 30) + '%';
+                                }
+                            }
+                        });
+                        text = result.data.text;
+                    }
+                    bar.style.width = '80%';
+                } else {
+                    status.textContent = 'Preparando OCR...';
+                    bar.style.width = '20%';
+
+                    if (typeof Tesseract === 'undefined') {
+                        status.textContent = 'Cargando motor OCR...';
+                        await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+                    }
+
+                    status.textContent = 'Analizando imagen...';
+                    bar.style.width = '40%';
+
+                    const result = await Tesseract.recognize(file, 'spa+eng', {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                bar.style.width = (40 + m.progress * 40) + '%';
+                            }
+                        }
+                    });
+                    text = result.data.text;
+                    bar.style.width = '80%';
+                }
+
+                status.textContent = 'Extrayendo datos...';
+                bar.style.width = '85%';
+
+                if (!text || text.trim().length < 5) {
+                    bar.style.width = '100%';
+                    status.textContent = 'No se pudo leer texto. Intenta con una foto mas clara o llena manualmente.';
+                    setTimeout(() => progress.classList.remove('active'), 5000);
+                    return;
+                }
+
+                let aiSuccess = false;
+                try {
+                    status.textContent = 'Dream esta analizando el certificado...';
+                    bar.style.width = '90%';
+                    const aiResp = await fetch('/api/parse-extracurricular', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({text: text})
+                    });
+                    const aiData = await aiResp.json();
+                    if (aiData.success && (aiData.title || aiData.company)) {
+                        if (aiData.title) document.getElementById('pf_title').value = aiData.title;
+                        if (aiData.company) document.getElementById('pf_company').value = aiData.company;
+                        if (aiData.location) document.getElementById('pf_location').value = aiData.location;
+                        if (aiData.date) document.getElementById('pf_date').value = aiData.date;
+                        if (aiData.roles && Array.isArray(aiData.roles) && aiData.roles.length > 0) {
+                            document.getElementById('pf_roles').value = aiData.roles.join('\n');
+                        }
+                        if (aiData.tags) document.getElementById('pf_tags').value = aiData.tags;
+                        bar.style.width = '100%';
+                        status.textContent = 'Dream extrajo los datos! Revisa y edita si es necesario.';
+                        aiSuccess = true;
+                        setTimeout(() => progress.classList.remove('active'), 4000);
+                    }
+                } catch(aiErr) {
+                    console.log('AI parse unavailable for extracurricular:', aiErr);
+                }
+
+                if (!aiSuccess) {
+                    bar.style.width = '100%';
+                    status.textContent = 'No se pudo extraer automaticamente. Llena el formulario con el texto del documento.';
+                    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+                    if (lines.length > 0) {
+                        document.getElementById('pf_roles').value = lines.slice(0, 10).join('\n');
+                    }
+                    setTimeout(() => progress.classList.remove('active'), 5000);
+                }
+            } catch(e) {
+                console.error('Extracurricular OCR Error:', e);
+                status.textContent = 'Error: ' + e.message + '. Llena el formulario manualmente.';
+                bar.style.width = '0%';
+                setTimeout(() => progress.classList.remove('active'), 6000);
+            }
+        }
+
         function buildSelectorLines(lines) {
             const filtered = [];
             const skipLine = /^(certificate|certificado|certifica a|otorga|award|verify|credential|issued|emitido|fecha|this is to|has completed|ha completado|se certifica|se otorga|hereby|por la presente|por participar|congratulations|felicitaciones|aprobado|approved|certificacion de|horas de|hours of)/i;
@@ -3225,26 +3369,50 @@
 
         // Extracurricular CRUD
         window.showAddForm_extracurricular = function() {
-            showEntryForm('addForm_extracurricular', [
-                {key:'title', label:'Actividad', placeholder:'Ej: Voluntaria Educativa...'},
-                {key:'company', label:'Organizacion (opcional)', placeholder:''},
-                {key:'location', label:'Ubicacion', placeholder:'Lima, PE'},
-                {key:'date', label:'Periodo', placeholder:'Enero 2025 – Marzo 2025'},
-                {key:'roles', label:'Logros (uno por linea)', type:'textarea', placeholder:'Desarrollo de pagina web...\nAnalisis de datos...'},
-                {key:'tags', label:'Tags', placeholder:'frontend, web, data'}
-            ], function save(){
-                const data = getCVData();
-                data.extracurricular.push({
-                    title: document.getElementById('pf_title').value,
-                    company: document.getElementById('pf_company').value,
-                    location: document.getElementById('pf_location').value,
-                    date: document.getElementById('pf_date').value,
-                    roles: document.getElementById('pf_roles').value.split('\n').map(s=>s.trim()).filter(Boolean),
-                    tags: document.getElementById('pf_tags').value.split(',').map(s=>s.trim()).filter(Boolean)
-                });
-                saveCVData(data); renderProfile();
-            });
+            const formContainer = document.getElementById('addForm_extracurricular');
+            formContainer.style.display = 'block';
+            formContainer.innerHTML = `<div class="profile-form">
+                <div class="quick-fill" onclick="document.getElementById('extraFileInput').click()">
+                    <div class="quick-fill-icon">🏆</div>
+                    <div class="quick-fill-text">Llenado rapido - Subir certificado de hackathon, voluntariado o evento</div>
+                    <div class="quick-fill-sub">Se extraera automaticamente la actividad, organizacion, fecha y logros</div>
+                    <input type="file" id="extraFileInput" accept="image/*,.pdf" style="display:none" onchange="processExtraFile(this)">
+                    <div class="quick-fill-progress" id="extraProgress">
+                        <div class="quick-fill-bar"><div class="quick-fill-bar-inner" id="extraProgressBar"></div></div>
+                        <div class="quick-fill-status" id="extraProgressStatus">Procesando...</div>
+                    </div>
+                </div>
+                <label>Actividad</label>
+                <input id="pf_title" placeholder="Ej: Hackathon IA 2025">
+                <label>Organizacion (opcional)</label>
+                <input id="pf_company" placeholder="Ej: Universidad Nacional de Ingenieria">
+                <label>Ubicacion</label>
+                <input id="pf_location" placeholder="Lima, PE">
+                <label>Periodo</label>
+                <input id="pf_date" placeholder="Enero 2025 – Marzo 2025">
+                <label>Logros (uno por linea)</label>
+                <textarea id="pf_roles" placeholder="Desarrollo de pagina web...\nAnalisis de datos..."></textarea>
+                <label>Tags</label>
+                <input id="pf_tags" placeholder="frontend, web, data, hackathon">
+                <div class="profile-form-actions">
+                    <button class="pf-save" onclick="saveExtraFromForm()">Guardar</button>
+                    <button class="pf-cancel" onclick="document.getElementById('addForm_extracurricular').style.display='none'">Cancelar</button>
+                </div>
+            </div>`;
         };
+
+        function saveExtraFromForm() {
+            const data = getCVData();
+            data.extracurricular.push({
+                title: document.getElementById('pf_title').value,
+                company: document.getElementById('pf_company').value,
+                location: document.getElementById('pf_location').value,
+                date: document.getElementById('pf_date').value,
+                roles: document.getElementById('pf_roles').value.split('\n').map(s=>s.trim()).filter(Boolean),
+                tags: document.getElementById('pf_tags').value.split(',').map(s=>s.trim()).filter(Boolean)
+            });
+            saveCVData(data); renderProfile();
+        }
 
         window.editExtra = function(idx) {
             const data = getCVData();

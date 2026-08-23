@@ -1099,6 +1099,77 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
 
+        elif path == "/api/parse-extracurricular":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                ocr_text = body.get("text", "")
+                if not ocr_text:
+                    self._json_response(400, {"success": False, "error": "No text provided"})
+                    return
+
+                groq_key = os.environ.get("GROQ_API_KEY", "")
+                if not groq_key:
+                    self._json_response(200, {"success": False, "error": "GROQ_API_KEY not configured"})
+                    return
+
+                prompt = f"""Analiza este texto extraído de un documento de actividad extracurricular (certificado de hackathon, voluntariado, competencia, taller, evento) y extrae la información en formato JSON.
+El texto puede tener errores de OCR. Identifica:
+- "title": el nombre de la actividad, hackathon, competencia o evento
+- "company": la organización que lo organiza (universidad, empresa, comunidad)
+- "location": la ubicación (ciudad, país) o "Virtual" si es online
+- "date": la fecha o periodo del evento (ej: "Marzo 2025", "15-17 Noviembre 2024")
+- "roles": lista de logros, contribuciones o lo que se hizo (máximo 5 items, cada uno como string corto)
+- "tags": lista de tags relevantes, solo de estos: data, python, excel, frontend, backend, cloud, marketing, liderazgo, mobile, devops, qa, design, bi, analytics, web, ia, hackathon
+
+Texto del documento:
+\"\"\"
+{ocr_text[:3000]}
+\"\"\"
+
+Responde SOLO con el JSON, sin explicaciones ni markdown:"""
+
+                resp = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "llama-3.1-8b-instant",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0.1,
+                        "max_tokens": 500
+                    },
+                    timeout=15
+                )
+
+                if resp.status_code == 200:
+                    ai_text = resp.json()["choices"][0]["message"]["content"].strip()
+                    ai_text = ai_text.replace("```json", "").replace("```", "").strip()
+                    parsed = json.loads(ai_text)
+                    roles = parsed.get("roles", [])
+                    if isinstance(roles, str):
+                        roles = [r.strip() for r in roles.split("\n") if r.strip()]
+                    tags = parsed.get("tags", [])
+                    if isinstance(tags, list):
+                        tags = ", ".join(tags)
+                    self._json_response(200, {
+                        "success": True,
+                        "title": parsed.get("title", ""),
+                        "company": parsed.get("company", ""),
+                        "location": parsed.get("location", ""),
+                        "date": parsed.get("date", ""),
+                        "roles": roles,
+                        "tags": tags
+                    })
+                else:
+                    self._json_response(200, {"success": False, "error": f"Groq API error: {resp.status_code}"})
+            except json.JSONDecodeError:
+                self._json_response(200, {"success": False, "error": "Could not parse AI response"})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
         elif path == "/api/review-cv":
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
