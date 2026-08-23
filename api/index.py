@@ -978,19 +978,21 @@ class handler(BaseHTTPRequestHandler):
                     self._json_response(200, {"success": False, "error": "GROQ_API_KEY not configured"})
                     return
 
-                prompt = f"""Analiza este texto extraído de un certificado/diploma y extrae la información en formato JSON.
-El texto puede tener errores de OCR. Identifica:
-- "name": el nombre del curso, programa o certificación (NO el nombre de la persona ni de la institución)
-- "institution": la institución que otorga el certificado (ej: Platzi, Coursera, Udemy, universidad)
-- "date": la fecha o periodo del certificado
-- "tags": lista de tags relevantes para búsqueda laboral, solo de estos: data, python, excel, frontend, backend, cloud, marketing, liderazgo, mobile, devops, qa, design
+                system_prompt = """Eres un experto que analiza certificados educativos escaneados.
+Extrae datos limpios del texto OCR y devuelve JSON.
+REGLAS:
+- "name" es SOLO el nombre del curso o certificación (NO el nombre de la persona). Máximo 10 palabras.
+- "institution" es quien otorga el certificado.
+- "tags" solo de: data, python, excel, frontend, backend, cloud, marketing, liderazgo, mobile, devops, qa, design
 
-Texto del certificado:
-\"\"\"
+EJEMPLO: {"name":"Machine Learning Fundamentals","institution":"Coursera","date":"Marzo 2024","tags":["data","python"]}"""
+
+                user_prompt = f"""Extrae los datos de este certificado y devuelve SOLO el JSON.
+
+Texto OCR:
 {ocr_text[:2000]}
-\"\"\"
 
-Responde SOLO con el JSON, sin explicaciones ni markdown:"""
+JSON:"""
 
                 resp = requests.post(
                     "https://api.groq.com/openai/v1/chat/completions",
@@ -1000,11 +1002,14 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                     },
                     json={
                         "model": "openai/gpt-oss-20b",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.1,
-                        "max_tokens": 300
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        "temperature": 0.2,
+                        "max_tokens": 400
                     },
-                    timeout=10
+                    timeout=15
                 )
 
                 if resp.status_code == 200:
@@ -1042,21 +1047,23 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                     self._json_response(200, {"success": False, "error": "GROQ_API_KEY not configured"})
                     return
 
-                prompt = f"""Analiza este texto extraído de un documento laboral (constancia de trabajo, certificado de empleo, carta de recomendación, boleta, contrato) y extrae la información de la experiencia laboral en formato JSON.
-El texto puede tener errores de OCR. Identifica:
-- "title": el cargo o puesto que ocupó la persona (ej: Practicante, Analista, Asistente)
-- "company": el nombre de la empresa u organización
-- "location": la ubicación (ciudad, país)
-- "date": el periodo laborado (ej: "Enero 2024 – Junio 2024")
-- "roles": lista de funciones, responsabilidades o logros mencionados (máximo 5 items, cada uno como string corto)
-- "tags": lista de tags relevantes, solo de estos: data, python, excel, frontend, backend, cloud, marketing, liderazgo, mobile, devops, qa, design, bi, analytics, ventas, administracion, rrhh, logistica, contabilidad
+                system_prompt = """Eres un experto en recursos humanos que analiza documentos laborales escaneados.
+Tu trabajo: extraer datos limpios del texto OCR y devolver JSON.
+REGLAS ESTRICTAS:
+- "title" debe ser SOLO el cargo (ej: "Practicante de Sistemas", "Analista de Datos"). Máximo 6 palabras.
+- "company" es el nombre de la empresa.
+- "roles" son 3-5 funciones/logros en primera persona con verbos de acción. NO copies texto literal del documento.
+- Si el documento no menciona funciones específicas, GENERA roles típicos del cargo mencionado.
 
-Texto del documento:
-\"\"\"
+EJEMPLO de respuesta correcta:
+{"title":"Practicante de Sistemas","company":"Banco de Crédito del Perú","location":"Lima, PE","date":"Enero 2024 - Junio 2024","roles":["Desarrollé reportes automatizados con Python y SQL para el área de operaciones","Mantuve y actualicé bases de datos del sistema interno","Brindé soporte técnico a usuarios de la plataforma corporativa","Documenté procesos y procedimientos del área de TI","Colaboré en la migración de datos del sistema legacy"],"tags":["data","python","backend","analytics"]}"""
+
+                user_prompt = f"""Extrae los datos de este documento laboral escaneado y devuelve SOLO el JSON.
+
+Texto OCR:
 {ocr_text[:3000]}
-\"\"\"
 
-Responde SOLO con el JSON, sin explicaciones ni markdown:"""
+Responde UNICAMENTE con el JSON, sin texto adicional:"""
 
                 resp = requests.post(
                     "https://api.groq.com/openai/v1/chat/completions",
@@ -1066,11 +1073,14 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                     },
                     json={
                         "model": "openai/gpt-oss-20b",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.1,
-                        "max_tokens": 500
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        "temperature": 0.3,
+                        "max_tokens": 800
                     },
-                    timeout=15
+                    timeout=20
                 )
 
                 if resp.status_code == 200:
@@ -1113,22 +1123,23 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                     self._json_response(200, {"success": False, "error": "GROQ_API_KEY not configured"})
                     return
 
-                prompt = f"""Analiza este texto extraído de un certificado de participación en una actividad extracurricular (hackathon, voluntariado, competencia, taller, evento académico).
-El texto puede tener errores de OCR, nombres mezclados y texto decorativo. Tu trabajo es identificar la información CLAVE:
+                system_prompt = """Eres un experto en recursos humanos que analiza certificados escaneados.
+Tu trabajo: extraer datos limpios del texto OCR y devolver JSON.
+REGLAS ESTRICTAS:
+- "title" debe ser el NOMBRE del evento (ej: "Hackathon Desafío IA 2026"), NO una descripción larga. Máximo 10 palabras.
+- "company" es quien organiza o certifica (ej: "Laboratorios Bagó del Perú").
+- "roles" son 3-5 logros que TÚ GENERAS basándote en el contexto del evento. Usa primera persona y verbos de acción.
+- NUNCA copies frases literales del certificado. Reescribe todo en formato profesional.
 
-- "title": el NOMBRE COMPLETO del evento, hackathon o actividad (ej: "Hackathon Desafío IA Bagó Perú 2026", "Voluntariado Educativo 2025"). NO uses el nombre de la persona.
-- "company": la organización o empresa que ORGANIZA o CERTIFICA el evento (ej: "Laboratorios Bagó del Perú", "Universidad Peruana de Ciencias Aplicadas"). Busca después de palabras como "organizado por", "otorgado por", "auspiciado por", o nombres de universidades/empresas.
-- "location": la ciudad y país (ej: "Lima, PE") o "Virtual" si es online
-- "date": las fechas del evento (ej: "12-13 Junio 2026", "Noviembre 2024"). Busca fechas específicas, no uses fechas de emisión del certificado.
-- "roles": genera 3-5 logros BREVES basados en la participación descrita en el certificado. Usa verbos de acción (ej: "Desarrollé solución tecnológica en equipo", "Participé en competencia de innovación con IA"). NO copies texto literal del certificado.
-- "tags": lista de tags relevantes, solo de estos: data, python, excel, frontend, backend, cloud, marketing, liderazgo, mobile, devops, qa, design, bi, analytics, web, ia, hackathon
+EJEMPLO de respuesta correcta:
+{"title":"Hackathon Desafío IA Bagó 2026","company":"Laboratorios Bagó del Perú","location":"Lima, PE","date":"12-13 Junio 2026","roles":["Desarrollé solución tecnológica innovadora en equipo multidisciplinario","Apliqué técnicas de inteligencia artificial para resolver problema de negocio","Presenté proyecto ante panel de jueces expertos en industria farmacéutica","Colaboré en diseño y prototipado rápido bajo presión de tiempo","Obtuve reconocimiento por participación destacada en competencia"],"tags":["hackathon","ia","data","backend","design"]}"""
 
-Texto del documento:
-\"\"\"
+                user_prompt = f"""Extrae los datos de este certificado escaneado y devuelve SOLO el JSON.
+
+Texto OCR:
 {ocr_text[:3000]}
-\"\"\"
 
-Responde SOLO con el JSON, sin explicaciones ni markdown:"""
+Responde UNICAMENTE con el JSON, sin texto adicional:"""
 
                 resp = requests.post(
                     "https://api.groq.com/openai/v1/chat/completions",
@@ -1138,11 +1149,14 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                     },
                     json={
                         "model": "openai/gpt-oss-20b",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.1,
-                        "max_tokens": 500
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        "temperature": 0.3,
+                        "max_tokens": 800
                     },
-                    timeout=15
+                    timeout=20
                 )
 
                 if resp.status_code == 200:
