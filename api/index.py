@@ -1263,6 +1263,107 @@ Oferta laboral:
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
 
+        elif path == "/api/improve-cv":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                cv_text = body.get("cv_text", "")[:3000]
+                job_summary = body.get("job_summary", "")[:1000]
+                review_feedback = body.get("review_feedback", {})
+
+                if not cv_text or not job_summary:
+                    self._json_response(400, {"success": False, "error": "cv_text and job_summary required"})
+                    return
+
+                groq_key = os.environ.get("GROQ_API_KEY", "")
+                if not groq_key:
+                    self._json_response(200, {"success": False, "error": "GROQ_API_KEY not configured"})
+                    return
+
+                feedback_text = ""
+                for key in ["alineamiento", "estructura", "mejoras"]:
+                    items = review_feedback.get(key, [])
+                    if items:
+                        feedback_text += f"\n{key.upper()}:\n" + "\n".join(f"- {i}" for i in items)
+
+                system_prompt = """Eres un experto en redaccion de CVs para el mercado latinoamericano de tecnologia con 15 anos de experiencia.
+
+Recibes:
+1. El CV actual del candidato en texto plano
+2. El resumen de la oferta laboral a la que postula
+3. El feedback de una revision previa con problemas identificados
+
+Tu trabajo es MEJORAR el CV aplicando las sugerencias. Puedes:
+- Reescribir descripciones de roles/logros para incluir keywords relevantes del puesto
+- Mejorar el titulo profesional para que coincida mejor con la oferta
+- Reescribir el perfil profesional para destacar experiencia relevante
+- Cuantificar logros cuando el contexto lo permita
+- Usar verbos de accion y lenguaje profesional
+
+NO puedes:
+- Inventar experiencia, empresas o logros que no existen en el CV original
+- Agregar certificaciones o habilidades no mencionadas
+- Cambiar fechas, empresas o datos facticos
+- Exagerar o mentir sobre la experiencia
+
+Responde SOLO con un JSON (sin markdown ni explicaciones):
+{
+  "titulo_sugerido": "<titulo profesional mejorado>",
+  "perfil_profesional": "<resumen profesional mejorado de 2-3 lineas, adaptado al puesto>",
+  "roles_mejorados": {
+    "<titulo EXACTO de la experiencia tal como aparece en el CV>": ["logro mejorado 1", "logro mejorado 2", ...]
+  }
+}
+
+Reglas para roles_mejorados:
+- Usa los TITULOS EXACTOS del CV original como claves del objeto
+- Solo incluye experiencias cuyos roles realmente necesitan mejora
+- Cada logro debe ser conciso (1 linea) y usar verbos de accion
+- Incorpora keywords de la oferta laboral de forma natural"""
+
+                user_prompt = f"""CV ACTUAL:
+{cv_text}
+
+OFERTA LABORAL:
+{job_summary}
+
+FEEDBACK DE REVISION PREVIA (score: {review_feedback.get('score', 'N/A')}/10):
+{feedback_text}
+
+Mejora el CV aplicando las sugerencias. Responde SOLO con el JSON:"""
+
+                resp = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "openai/gpt-oss-20b",
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        "temperature": 0.4,
+                        "max_tokens": 2000
+                    },
+                    timeout=20
+                )
+
+                if resp.status_code == 200:
+                    ai_text = resp.json()["choices"][0]["message"]["content"].strip()
+                    ai_text = ai_text.replace("```json", "").replace("```", "").strip()
+                    improvements = json.loads(ai_text)
+                    self._json_response(200, {"success": True, "improvements": improvements})
+                elif resp.status_code == 429:
+                    self._json_response(200, {"success": False, "error": "Limite de uso alcanzado. Intenta en un minuto."})
+                else:
+                    self._json_response(200, {"success": False, "error": f"Groq API error: {resp.status_code}"})
+            except json.JSONDecodeError:
+                self._json_response(200, {"success": False, "error": "No se pudo interpretar la respuesta de la IA"})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
         else:
             self._json_response(404, {"success": False, "error": "Not found"})
 

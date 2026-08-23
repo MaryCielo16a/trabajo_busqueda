@@ -3695,6 +3695,12 @@ body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; col
 .review-category ul { margin: 0; padding-left: 18px; }
 .review-category li { font-size: 12px; color: #444; margin-bottom: 4px; line-height: 1.4; }
 .review-ai-tag { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 8px; }
+.cv-improved { animation: highlightFade 2s ease-out; }
+@keyframes highlightFade { from { background: #fff9c4; } to { background: transparent; } }
+.improve-btn { padding: 10px 24px; background: #ff9800; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+.improve-btn:hover { background: #f57c00; }
+.improve-btn:disabled { background: #ccc; cursor: not-allowed; }
+.cv-ready { text-align: center; margin-top: 12px; padding: 10px; background: #e8f5e9; border-radius: 6px; font-size: 14px; color: #2e7d32; font-weight: bold; }
 @media print {
     body { padding: 12mm 15mm; }
     .no-print { display: none; }
@@ -3785,6 +3791,10 @@ ${perfilProfesional ? `<div class="cv-summary">${perfilProfesional}</div>` : ''}
 ` + '<script>' + `
 var aiReviewData = ${reviewJSON};
 var reviewExpanded = false;
+var condensedCV = ${JSON.stringify(condensedCV)};
+var condensedJob = ${JSON.stringify(condensedJob)};
+var improvementCount = 0;
+var MAX_IMPROVEMENTS = 3;
 
 if (aiReviewData) { renderReview(aiReviewData); }
 
@@ -3818,6 +3828,13 @@ function renderReview(review) {
         html += '</ul></div>';
     }
     html += '</div>';
+    if (review.score < 7 && improvementCount < MAX_IMPROVEMENTS) {
+        html += '<div style="text-align:center;margin-top:12px;">';
+        html += '<button id="improveBtn" class="improve-btn" onclick="improveCV()">🔄 Mejorar CV automaticamente (' + (MAX_IMPROVEMENTS - improvementCount) + ' intentos restantes)</button>';
+        html += '</div>';
+    } else if (review.score >= 7) {
+        html += '<div class="cv-ready">✅ CV optimizado - Listo para enviar</div>';
+    }
     content.innerHTML = html;
 }
 
@@ -3837,10 +3854,10 @@ function requestReview() {
     fetch('/api/review-cv', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ cv_text: ${JSON.stringify(condensedCV)}, job_summary: ${JSON.stringify(condensedJob)} })
+        body: JSON.stringify({ cv_text: condensedCV, job_summary: condensedJob })
     }).then(function(r) { return r.json(); }).then(function(data) {
         loading.style.display = 'none';
-        if (data.success && data.review) { renderReview(data.review); }
+        if (data.success && data.review) { aiReviewData = data.review; renderReview(data.review); }
         else if (data.fallback) { renderFallback(); content.innerHTML = '<p style="color:#c62828;margin-bottom:8px;">' + (data.error || '') + '</p>' + content.innerHTML; }
         else { content.innerHTML = '<p style="color:#c62828;">Error: ' + (data.error || 'Error desconocido') + '</p>'; }
         btn.disabled = false; btn.textContent = '🤖 Revisar CV con IA';
@@ -3861,6 +3878,130 @@ function renderFallback() {
         '<li>¿Las certificaciones relevantes estan destacadas?</li>' +
         '<li>¿Tu experiencia incluye logros cuantificables?</li>' +
         '</ul></div>';
+}
+
+function improveCV() {
+    var btn = document.getElementById('improveBtn');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="review-spinner" style="display:inline-block;margin-right:8px;"></div> Mejorando CV...';
+    fetch('/api/improve-cv', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            cv_text: condensedCV,
+            job_summary: condensedJob,
+            review_feedback: aiReviewData
+        })
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success && data.improvements) {
+            applyImprovements(data.improvements);
+            improvementCount++;
+            reReviewCV();
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '🔄 Mejorar CV automaticamente (' + (MAX_IMPROVEMENTS - improvementCount) + ' intentos restantes)';
+            alert('Error: ' + (data.error || 'No se pudo mejorar el CV'));
+        }
+    }).catch(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '🔄 Mejorar CV automaticamente (' + (MAX_IMPROVEMENTS - improvementCount) + ' intentos restantes)';
+        alert('Error de conexion al mejorar CV');
+    });
+}
+
+function applyImprovements(imp) {
+    if (imp.titulo_sugerido) {
+        var titleEl = document.querySelector('.cv-title');
+        if (titleEl) { titleEl.textContent = imp.titulo_sugerido; titleEl.classList.add('cv-improved'); }
+    }
+    if (imp.perfil_profesional) {
+        var summaryEl = document.querySelector('.cv-summary');
+        if (summaryEl) {
+            summaryEl.textContent = imp.perfil_profesional;
+            summaryEl.classList.add('cv-improved');
+        } else {
+            var contactEl = document.querySelector('.cv-contact');
+            if (contactEl) {
+                var ns = document.createElement('div');
+                ns.className = 'cv-summary cv-improved';
+                ns.style.cssText = 'font-size:10pt;color:#444;margin:6px 0 10px;line-height:1.4;font-style:italic;';
+                ns.textContent = imp.perfil_profesional;
+                contactEl.insertAdjacentElement('afterend', ns);
+            }
+        }
+    }
+    if (imp.roles_mejorados) {
+        var entries = document.querySelectorAll('.cv-entry');
+        for (var i = 0; i < entries.length; i++) {
+            var entryTitleEl = entries[i].querySelector('.cv-entry-title');
+            if (!entryTitleEl) continue;
+            var entryTitle = entryTitleEl.childNodes[0] ? entryTitleEl.childNodes[0].textContent.trim() : entryTitleEl.textContent.trim();
+            for (var key in imp.roles_mejorados) {
+                if (entryTitle.toLowerCase().indexOf(key.toLowerCase()) !== -1 ||
+                    key.toLowerCase().indexOf(entryTitle.toLowerCase()) !== -1) {
+                    var rolesList = entries[i].querySelector('.cv-roles');
+                    if (rolesList) {
+                        var newRoles = imp.roles_mejorados[key];
+                        rolesList.innerHTML = '';
+                        for (var r = 0; r < newRoles.length; r++) {
+                            var li = document.createElement('li');
+                            li.textContent = newRoles[r];
+                            rolesList.appendChild(li);
+                        }
+                        entries[i].classList.add('cv-improved');
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    rebuildCondensedCV();
+}
+
+function rebuildCondensedCV() {
+    var title = document.querySelector('.cv-title');
+    var summary = document.querySelector('.cv-summary');
+    var t = 'TITULO: ' + (title ? title.textContent : '') + '\\n';
+    if (summary) t += 'PERFIL: ' + summary.textContent + '\\n';
+    t += '\\n';
+    var sections = document.querySelectorAll('.cv-section');
+    for (var s = 0; s < sections.length; s++) {
+        var sTitle = sections[s].querySelector('.cv-section-title');
+        if (sTitle) t += sTitle.textContent + ':\\n';
+        var sEntries = sections[s].querySelectorAll('.cv-entry');
+        for (var e = 0; e < sEntries.length; e++) {
+            var et = sEntries[e].querySelector('.cv-entry-title');
+            if (et) t += '- ' + (et.childNodes[0] ? et.childNodes[0].textContent.trim() : et.textContent.trim()) + '\\n';
+            var roles = sEntries[e].querySelectorAll('.cv-roles li');
+            for (var r = 0; r < roles.length; r++) {
+                t += '  * ' + roles[r].textContent + '\\n';
+            }
+        }
+    }
+    condensedCV = t.substring(0, 3000);
+}
+
+function reReviewCV() {
+    var content = document.getElementById('reviewContent');
+    content.innerHTML = '<div style="text-align:center;padding:16px;"><div class="review-spinner"></div> Re-evaluando CV mejorado...</div>';
+    reviewExpanded = true;
+    fetch('/api/review-cv', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ cv_text: condensedCV, job_summary: condensedJob })
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success && data.review) {
+            aiReviewData = data.review;
+            renderReview(data.review);
+        } else {
+            content.innerHTML = '<p style="color:#c62828;text-align:center;">Error en re-evaluacion: ' + (data.error || 'Error desconocido') + '</p>';
+        }
+    }).catch(function() {
+        content.innerHTML = '<p style="color:#c62828;text-align:center;">Error de conexion al re-evaluar</p>';
+    });
 }
 ` + '<\/script>' + `
 </body>
