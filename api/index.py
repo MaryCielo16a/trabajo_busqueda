@@ -1113,13 +1113,14 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                     self._json_response(200, {"success": False, "error": "GROQ_API_KEY not configured"})
                     return
 
-                prompt = f"""Analiza este texto extraído de un documento de actividad extracurricular (certificado de hackathon, voluntariado, competencia, taller, evento) y extrae la información en formato JSON.
-El texto puede tener errores de OCR. Identifica:
-- "title": el nombre de la actividad, hackathon, competencia o evento
-- "company": la organización que lo organiza (universidad, empresa, comunidad)
-- "location": la ubicación (ciudad, país) o "Virtual" si es online
-- "date": la fecha o periodo del evento (ej: "Marzo 2025", "15-17 Noviembre 2024")
-- "roles": lista de logros, contribuciones o lo que se hizo (máximo 5 items, cada uno como string corto)
+                prompt = f"""Analiza este texto extraído de un certificado de participación en una actividad extracurricular (hackathon, voluntariado, competencia, taller, evento académico).
+El texto puede tener errores de OCR, nombres mezclados y texto decorativo. Tu trabajo es identificar la información CLAVE:
+
+- "title": el NOMBRE COMPLETO del evento, hackathon o actividad (ej: "Hackathon Desafío IA Bagó Perú 2026", "Voluntariado Educativo 2025"). NO uses el nombre de la persona.
+- "company": la organización o empresa que ORGANIZA o CERTIFICA el evento (ej: "Laboratorios Bagó del Perú", "Universidad Peruana de Ciencias Aplicadas"). Busca después de palabras como "organizado por", "otorgado por", "auspiciado por", o nombres de universidades/empresas.
+- "location": la ciudad y país (ej: "Lima, PE") o "Virtual" si es online
+- "date": las fechas del evento (ej: "12-13 Junio 2026", "Noviembre 2024"). Busca fechas específicas, no uses fechas de emisión del certificado.
+- "roles": genera 3-5 logros BREVES basados en la participación descrita en el certificado. Usa verbos de acción (ej: "Desarrollé solución tecnológica en equipo", "Participé en competencia de innovación con IA"). NO copies texto literal del certificado.
 - "tags": lista de tags relevantes, solo de estos: data, python, excel, frontend, backend, cloud, marketing, liderazgo, mobile, devops, qa, design, bi, analytics, web, ia, hackathon
 
 Texto del documento:

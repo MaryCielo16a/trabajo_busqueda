@@ -2928,7 +2928,7 @@
                         body: JSON.stringify({text: text})
                     });
                     const aiData = await aiResp.json();
-                    if (aiData.success && (aiData.title || aiData.company)) {
+                    if (aiData.success) {
                         if (aiData.title) document.getElementById('pf_title').value = aiData.title;
                         if (aiData.company) document.getElementById('pf_company').value = aiData.company;
                         if (aiData.location) document.getElementById('pf_location').value = aiData.location;
@@ -2941,18 +2941,28 @@
                         status.textContent = 'Dream extrajo los datos! Revisa y edita si es necesario.';
                         aiSuccess = true;
                         setTimeout(() => progress.classList.remove('active'), 4000);
+                    } else {
+                        console.log('AI parse failed:', aiData.error);
                     }
                 } catch(aiErr) {
                     console.log('AI parse unavailable for experience:', aiErr);
                 }
 
                 if (!aiSuccess) {
-                    bar.style.width = '100%';
-                    status.textContent = 'No se pudo extraer automaticamente. Llena el formulario con el texto del documento.';
-                    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
-                    if (lines.length > 0) {
-                        document.getElementById('pf_roles').value = lines.slice(0, 10).join('\n');
+                    const parsed = parseActivityText(text);
+                    if (parsed.title) document.getElementById('pf_title').value = parsed.title;
+                    if (parsed.company) document.getElementById('pf_company').value = parsed.company;
+                    if (parsed.location) document.getElementById('pf_location').value = parsed.location;
+                    if (parsed.date) document.getElementById('pf_date').value = parsed.date;
+                    if (parsed.tags) document.getElementById('pf_tags').value = parsed.tags;
+                    const meaningfulLines = text.split('\n').map(l => l.trim())
+                        .filter(l => l.length > 10 && l.length < 200)
+                        .filter(l => !/^(certificado|certificate|constancia|se otorga|www\.|http|nombre|id:|ref:)/i.test(l));
+                    if (meaningfulLines.length > 0) {
+                        document.getElementById('pf_roles').value = meaningfulLines.slice(0, 5).join('\n');
                     }
+                    bar.style.width = '100%';
+                    status.textContent = parsed.title ? 'Extraccion parcial. Revisa y completa los campos.' : 'No se pudo extraer. Llena manualmente.';
                     setTimeout(() => progress.classList.remove('active'), 5000);
                 }
             } catch(e) {
@@ -3072,7 +3082,7 @@
                         body: JSON.stringify({text: text})
                     });
                     const aiData = await aiResp.json();
-                    if (aiData.success && (aiData.title || aiData.company)) {
+                    if (aiData.success) {
                         if (aiData.title) document.getElementById('pf_title').value = aiData.title;
                         if (aiData.company) document.getElementById('pf_company').value = aiData.company;
                         if (aiData.location) document.getElementById('pf_location').value = aiData.location;
@@ -3085,18 +3095,28 @@
                         status.textContent = 'Dream extrajo los datos! Revisa y edita si es necesario.';
                         aiSuccess = true;
                         setTimeout(() => progress.classList.remove('active'), 4000);
+                    } else {
+                        console.log('AI parse failed:', aiData.error);
                     }
                 } catch(aiErr) {
                     console.log('AI parse unavailable for extracurricular:', aiErr);
                 }
 
                 if (!aiSuccess) {
-                    bar.style.width = '100%';
-                    status.textContent = 'No se pudo extraer automaticamente. Llena el formulario con el texto del documento.';
-                    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
-                    if (lines.length > 0) {
-                        document.getElementById('pf_roles').value = lines.slice(0, 10).join('\n');
+                    const parsed = parseActivityText(text);
+                    if (parsed.title) document.getElementById('pf_title').value = parsed.title;
+                    if (parsed.company) document.getElementById('pf_company').value = parsed.company;
+                    if (parsed.location) document.getElementById('pf_location').value = parsed.location;
+                    if (parsed.date) document.getElementById('pf_date').value = parsed.date;
+                    if (parsed.tags) document.getElementById('pf_tags').value = parsed.tags;
+                    const meaningfulLines = text.split('\n').map(l => l.trim())
+                        .filter(l => l.length > 10 && l.length < 200)
+                        .filter(l => !/^(certificado|certificate|se otorga|otorga a|www\.|http|nombre|id:|ref:)/i.test(l));
+                    if (meaningfulLines.length > 0) {
+                        document.getElementById('pf_roles').value = meaningfulLines.slice(0, 5).join('\n');
                     }
+                    bar.style.width = '100%';
+                    status.textContent = parsed.title ? 'Extraccion parcial. Revisa y completa los campos.' : 'No se pudo extraer. Llena manualmente.';
                     setTimeout(() => progress.classList.remove('active'), 5000);
                 }
             } catch(e) {
@@ -3276,6 +3296,82 @@
             tags = foundTags.join(', ');
 
             return {name, date, tags};
+        }
+
+        function parseActivityText(text) {
+            const cleanText = text.replace(/\r/g, '');
+            const lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+            let title = '', company = '', location = '', date = '', tags = '';
+
+            const dateRegex = /(\d{1,2}[\s\/\-\.]\s*(de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*(de\s+)?\d{2,4}|\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|january|february|march|april|may|june|july|august|september|october|november|december)\s*,?\s*\d{4}\b|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/gi;
+            let dates = text.match(dateRegex) || [];
+            if (dates.length === 0) {
+                const yearMatch = text.match(/\b(20[1-9]\d)\b/g);
+                if (yearMatch) dates = yearMatch;
+            }
+            if (dates.length >= 2) date = dates[0] + ' – ' + dates[dates.length - 1];
+            else if (dates.length === 1) date = dates[0];
+
+            const titlePatterns = /\b(hackathon|hackat[oó]n|desaf[ií]o|concurso|competencia|olimpiada|datathon|makeathon|ideathon|startup weekend|game jam|code jam|challenge)\b/i;
+            for (const line of lines) {
+                if (titlePatterns.test(line) && line.length > 5 && line.length < 150) {
+                    title = line.replace(/^[\s\-\*•]+/, '').trim();
+                    break;
+                }
+            }
+            if (!title) {
+                const eventWords = /\b(taller|workshop|seminario|congreso|foro|cumbre|summit|bootcamp|programa|voluntariado|evento)\b/i;
+                for (const line of lines) {
+                    if (eventWords.test(line) && line.length > 5 && line.length < 150) {
+                        title = line.replace(/^[\s\-\*•]+/, '').trim();
+                        break;
+                    }
+                }
+            }
+
+            const orgPatterns = /\b(universidad|laboratorio|fundaci[oó]n|asociaci[oó]n|ministerio|municipalidad|organizaci[oó]n|instituto|colegio|empresa|corporaci[oó]n|grupo|sociedad|organizado por|auspiciado por)\b/i;
+            for (const line of lines) {
+                if (orgPatterns.test(line) && line.length > 5 && line.length < 150) {
+                    let org = line.replace(/^[\s\-\*•]+/, '').trim();
+                    org = org.replace(/^(organizado por|auspiciado por|presentado por)\s*/i, '');
+                    if (org !== title) { company = org; break; }
+                }
+            }
+
+            const locationPatterns = /\b(lima|arequipa|cusco|trujillo|piura|chiclayo|huancayo|ica|tacna|peru|per[uú]|virtual|online|remoto|presencial)\b/i;
+            const locMatch = text.match(locationPatterns);
+            if (locMatch) {
+                const locLine = lines.find(l => locationPatterns.test(l) && l.length < 80);
+                if (locLine) {
+                    const cityMatch = locLine.match(/\b(Lima|Arequipa|Cusco|Trujillo|Piura|Chiclayo|Huancayo|Ica|Tacna)\b/i);
+                    location = cityMatch ? cityMatch[0] + ', PE' : (locMatch[0].charAt(0).toUpperCase() + locMatch[0].slice(1));
+                } else {
+                    location = locMatch[0].charAt(0).toUpperCase() + locMatch[0].slice(1);
+                    if (/lima|arequipa|cusco|trujillo|piura/i.test(location)) location += ', PE';
+                }
+            }
+
+            const tagKeywords = {
+                'hackathon': ['hackathon', 'hackatón', 'hackaton'],
+                'ia': ['inteligencia artificial', ' ia ', ' ai ', 'machine learning', 'deep learning'],
+                'data': ['data', 'datos', 'analisis', 'analytics', 'bi'],
+                'web': ['web', 'pagina', 'sitio', 'website'],
+                'frontend': ['html', 'css', 'javascript', 'react', 'angular', 'vue', 'frontend'],
+                'backend': ['backend', 'api', 'servidor', 'database', 'sql'],
+                'python': ['python'],
+                'design': ['diseño', 'design', 'ux', 'ui', 'figma'],
+                'liderazgo': ['liderazgo', 'leadership', 'voluntariado', 'comunidad'],
+                'mobile': ['mobile', 'app', 'android', 'ios', 'flutter'],
+                'cloud': ['cloud', 'aws', 'azure', 'gcp', 'docker']
+            };
+            const textLower = text.toLowerCase();
+            const foundTags = [];
+            for (const [tag, keywords] of Object.entries(tagKeywords)) {
+                if (keywords.some(k => textLower.includes(k))) foundTags.push(tag);
+            }
+            tags = foundTags.join(', ');
+
+            return {title, company, location, date, tags};
         }
 
         window.editCert = function(idx) {
