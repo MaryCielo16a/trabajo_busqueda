@@ -3411,7 +3411,7 @@ ${perfilProfesional ? `<div class="cv-summary">${perfilProfesional}</div>` : ''}
     ${cvd.languages.map(l => `<div class="cv-languages">${l}</div>`).join('')}
 </div>
 
-<script>
+` + '<script>' + `
 var aiReviewData = ${reviewJSON};
 var reviewExpanded = false;
 
@@ -3491,7 +3491,7 @@ function renderFallback() {
         '<li>¿Tu experiencia incluye logros cuantificables?</li>' +
         '</ul></div>';
 }
-</script>
+` + '<\/script>' + `
 </body>
 </html>`;
 
