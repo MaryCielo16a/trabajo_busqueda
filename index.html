@@ -1459,6 +1459,13 @@
                     <input type="checkbox" id="remoteOnly" checked>
                     Solo remoto
                 </label>
+                <select id="dateFilter" style="padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-size:13px;background:#fff;cursor:pointer;">
+                    <option value="all">Cualquier fecha</option>
+                    <option value="3" selected>Ultimos 3 dias</option>
+                    <option value="7">Ultima semana</option>
+                    <option value="14">Ultimos 14 dias</option>
+                    <option value="30">Ultimo mes</option>
+                </select>
             </div>
 
             <button class="btn btn-secondary" onclick="loadStats()">
@@ -1755,6 +1762,7 @@
         });
 
         document.getElementById('remoteOnly').addEventListener('change', () => { currentPage = 1; renderJobs(); });
+        document.getElementById('dateFilter').addEventListener('change', () => { currentPage = 1; renderJobs(); });
 
         function renderCategoryFilter(jobs) {
             const counts = {all: jobs.length};
@@ -1792,6 +1800,16 @@
 
             if (remoteOnly) {
                 jobs = jobs.filter(j => j.is_remote);
+            }
+
+            const dateDays = document.getElementById('dateFilter').value;
+            if (dateDays !== 'all') {
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - parseInt(dateDays));
+                jobs = jobs.filter(j => {
+                    if (!j.scraped_date) return false;
+                    return new Date(j.scraped_date) >= cutoff;
+                });
             }
 
             renderCategoryFilter(jobs);
