@@ -1728,8 +1728,10 @@
         function storeJobs(newJobs) {
             const existing = getStoredJobs();
             const ids = new Set(existing.map(j => j.id));
+            const now = new Date().toISOString();
             for (const j of newJobs) {
                 if (!ids.has(j.id)) {
+                    if (!j.scraped_date) j.scraped_date = now;
                     existing.push(j);
                     ids.add(j.id);
                 }
@@ -1807,7 +1809,7 @@
                 const cutoff = new Date();
                 cutoff.setDate(cutoff.getDate() - parseInt(dateDays));
                 jobs = jobs.filter(j => {
-                    if (!j.scraped_date) return false;
+                    if (!j.scraped_date) return true;
                     return new Date(j.scraped_date) >= cutoff;
                 });
             }
