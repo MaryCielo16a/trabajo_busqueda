@@ -999,7 +999,7 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": "llama-3.1-8b-instant",
+                        "model": "openai/gpt-oss-20b",
                         "messages": [{"role": "user", "content": prompt}],
                         "temperature": 0.1,
                         "max_tokens": 300
@@ -1065,7 +1065,7 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": "llama-3.1-8b-instant",
+                        "model": "openai/gpt-oss-20b",
                         "messages": [{"role": "user", "content": prompt}],
                         "temperature": 0.1,
                         "max_tokens": 500
@@ -1136,7 +1136,7 @@ Responde SOLO con el JSON, sin explicaciones ni markdown:"""
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": "llama-3.1-8b-instant",
+                        "model": "openai/gpt-oss-20b",
                         "messages": [{"role": "user", "content": prompt}],
                         "temperature": 0.1,
                         "max_tokens": 500
@@ -1238,7 +1238,7 @@ Oferta laboral:
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": "llama-3.1-8b-instant",
+                        "model": "openai/gpt-oss-20b",
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_prompt}
