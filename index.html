@@ -1468,7 +1468,7 @@
                 </select>
             </div>
 
-            <button class="btn btn-secondary" onclick="loadStats()">
+            <button class="btn btn-secondary" onclick="renderJobs()">
                 📊 Actualizar stats
             </button>
 
@@ -1760,7 +1760,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadFilters();
             renderJobs();
-            updateStats();
         });
 
         document.getElementById('remoteOnly').addEventListener('change', () => { currentPage = 1; renderJobs(); });
@@ -1814,6 +1813,7 @@
                 });
             }
 
+            updateStats(jobs);
             renderCategoryFilter(jobs);
 
             if (activeCategory !== 'all') {
@@ -1840,13 +1840,29 @@
             }
 
             if (totalJobs === 0) {
-                jobsList.innerHTML = `
-                    <div class="empty-state">
-                        <p>📭 No hay ofertas aun</p>
-                        <p style="font-size: 12px; margin-top: 10px;">Haz click en "Busqueda rapida" para comenzar</p>
-                    </div>
-                    ${hiddenToggleHtml}
-                `;
+                const allStored = getStoredJobs().length;
+                const isFiltered = remoteOnly || dateDays !== 'all';
+                if (allStored > 0 && isFiltered) {
+                    jobsList.innerHTML = `
+                        <div class="empty-state">
+                            <p>🔍 Ninguna oferta coincide con los filtros actuales</p>
+                            <p style="font-size: 12px; margin-top: 10px;">
+                                Tienes ${allStored} ofertas guardadas. Prueba cambiar el filtro de fecha a
+                                <a href="#" onclick="document.getElementById('dateFilter').value='all'; renderJobs(); return false;" style="color:#667eea;font-weight:bold;">Cualquier fecha</a>
+                                ${remoteOnly ? ' o desmarcar <b>Solo remoto</b>' : ''}
+                            </p>
+                        </div>
+                        ${hiddenToggleHtml}
+                    `;
+                } else {
+                    jobsList.innerHTML = `
+                        <div class="empty-state">
+                            <p>📭 No hay ofertas aun</p>
+                            <p style="font-size: 12px; margin-top: 10px;">Haz click en "Busqueda rapida" para comenzar</p>
+                        </div>
+                        ${hiddenToggleHtml}
+                    `;
+                }
                 return;
             }
 
@@ -1931,8 +1947,8 @@
             document.querySelector('.jobs-container').scrollIntoView({behavior: 'smooth'});
         }
 
-        function updateStats() {
-            const jobs = getStoredJobs();
+        function updateStats(filteredJobs) {
+            const jobs = filteredJobs || getStoredJobs();
             const remote = jobs.filter(j => j.is_remote).length;
             const bySrc = {};
             for (const j of jobs) {
@@ -1977,7 +1993,6 @@
                 if (data.success && data.jobs) {
                     storeJobs(data.jobs);
                     renderJobs();
-                    updateStats();
 
                     const msg = `Encontradas ${data.jobs_found} ofertas\n` +
                         `Computrabajo: ${data.by_source.computrabajo}\n` +
