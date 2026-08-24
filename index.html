@@ -2570,7 +2570,9 @@
         }
 
         // Generic form helpers
+        var _formSaveCallback = null;
         function showEntryForm(containerId, fields, onSave) {
+            _formSaveCallback = onSave;
             const el = document.getElementById(containerId);
             el.style.display = 'block';
             el.innerHTML = `<div class="profile-form">
@@ -2579,10 +2581,11 @@
                     ${f.type === 'textarea' ? `<textarea id="pf_${f.key}" placeholder="${f.placeholder || ''}">${f.value || ''}</textarea>` : `<input id="pf_${f.key}" value="${escapeHtml(f.value || '')}" placeholder="${f.placeholder || ''}">`}
                 `).join('')}
                 <div class="profile-form-actions">
-                    <button class="pf-save" onclick="(${onSave})()">Guardar</button>
+                    <button class="pf-save" onclick="_formSaveCallback()">Guardar</button>
                     <button class="pf-cancel" onclick="document.getElementById('${containerId}').style.display='none'">Cancelar</button>
                 </div>
             </div>`;
+            el.scrollIntoView({behavior: 'smooth', block: 'center'});
         }
 
         // Education CRUD
