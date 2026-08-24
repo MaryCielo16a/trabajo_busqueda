@@ -43,6 +43,8 @@ CATEGORIES = {
     "otro": [],
 }
 
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+
 SENDER_EMAIL = os.getenv("SENDER_EMAIL", "")
 SENDER_APP_PASSWORD = os.getenv("SENDER_APP_PASSWORD", "")
 RECIPIENT_EMAILS = os.getenv(
@@ -317,6 +319,49 @@ def update_user_info(token, name, email):
     except sqlite3.IntegrityError:
         conn.close()
         return False
+
+
+def verify_google_token(id_token):
+    try:
+        resp = requests.get(
+            f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}",
+            timeout=10
+        )
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        if GOOGLE_CLIENT_ID and data.get("aud") != GOOGLE_CLIENT_ID:
+            return None
+        return {
+            "email": data.get("email", ""),
+            "name": data.get("name", ""),
+            "picture": data.get("picture", ""),
+            "google_id": data.get("sub", ""),
+        }
+    except Exception:
+        return None
+
+
+def google_auth_user(google_info):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    email = google_info["email"].lower()
+    row = conn.execute("SELECT id, name, email, token FROM users WHERE email = ?", (email,)).fetchone()
+    token = secrets.token_hex(32)
+    if row:
+        conn.execute("UPDATE users SET token = ?, last_login = ? WHERE id = ?", (token, datetime.now().isoformat(), row[0]))
+        conn.commit()
+        conn.close()
+        return {"id": row[0], "name": row[1], "email": row[2], "token": token}
+    else:
+        conn.execute(
+            "INSERT INTO users (name, email, password_hash, token, created_date, last_login) VALUES (?, ?, ?, ?, ?, ?)",
+            (google_info["name"], email, "google_oauth", token, datetime.now().isoformat(), datetime.now().isoformat())
+        )
+        conn.commit()
+        user = conn.execute("SELECT id, name, email, token FROM users WHERE email = ?", (email,)).fetchone()
+        conn.close()
+        return {"id": user[0], "name": user[1], "email": user[2], "token": user[3]}
 
 
 def classify_job(title):
@@ -897,6 +942,12 @@ class handler(BaseHTTPRequestHandler):
                 "cv_profile": cv_profile
             })
 
+        elif path == "/api/auth/config":
+            self._json_response(200, {
+                "success": True,
+                "google_client_id": GOOGLE_CLIENT_ID
+            })
+
         elif path == "/api/cron":
             try:
                 keywords = get_active_keywords()
@@ -1421,6 +1472,30 @@ Oferta laboral:
                     self._json_response(200, {"success": True, "user": user})
                 else:
                     self._json_response(401, {"success": False, "error": "Email o contrasena incorrectos"})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
+        elif path == "/api/auth/google":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                id_token = body.get("id_token", "")
+                email = body.get("email", "")
+                name = body.get("name", "")
+
+                if id_token and id_token != "__access_token__":
+                    google_info = verify_google_token(id_token)
+                    if not google_info:
+                        self._json_response(401, {"success": False, "error": "Token de Google invalido"})
+                        return
+                elif email:
+                    google_info = {"email": email, "name": name or email.split("@")[0], "picture": "", "google_id": body.get("google_id", "")}
+                else:
+                    self._json_response(400, {"success": False, "error": "Token o email de Google requerido"})
+                    return
+
+                user = google_auth_user(google_info)
+                self._json_response(200, {"success": True, "user": user})
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
 
