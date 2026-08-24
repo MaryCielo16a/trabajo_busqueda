@@ -9,6 +9,7 @@ import os
 import sqlite3
 import time
 import smtplib
+import secrets
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -92,6 +93,18 @@ def init_db():
         CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
             value TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            token TEXT UNIQUE,
+            cv_profile TEXT,
+            created_date TEXT,
+            last_login TEXT
         )
     """)
     existing = conn.execute("SELECT COUNT(*) FROM filters").fetchone()[0]
@@ -235,6 +248,75 @@ def set_remote_only(value):
     conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('remote_only', ?)", ("true" if value else "false",))
     conn.commit()
     conn.close()
+
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def register_user(name, email, password):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        token = secrets.token_hex(32)
+        conn.execute(
+            "INSERT INTO users (name, email, password_hash, token, created_date, last_login) VALUES (?, ?, ?, ?, ?, ?)",
+            (name.strip(), email.strip().lower(), hash_password(password), token, datetime.now().isoformat(), datetime.now().isoformat())
+        )
+        conn.commit()
+        user = conn.execute("SELECT id, name, email, token FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
+        conn.close()
+        return {"id": user[0], "name": user[1], "email": user[2], "token": user[3]}
+    except sqlite3.IntegrityError:
+        conn.close()
+        return None
+
+
+def login_user(email, password):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute("SELECT id, name, email, password_hash, token FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
+    if not row or row[3] != hash_password(password):
+        conn.close()
+        return None
+    token = secrets.token_hex(32)
+    conn.execute("UPDATE users SET token = ?, last_login = ? WHERE id = ?", (token, datetime.now().isoformat(), row[0]))
+    conn.commit()
+    conn.close()
+    return {"id": row[0], "name": row[1], "email": row[2], "token": token}
+
+
+def get_user_by_token(token):
+    if not token:
+        return None
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute("SELECT id, name, email, token, cv_profile FROM users WHERE token = ?", (token,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {"id": row[0], "name": row[1], "email": row[2], "token": row[3], "cv_profile": row[4]}
+
+
+def save_user_profile(token, cv_profile_json):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("UPDATE users SET cv_profile = ? WHERE token = ?", (cv_profile_json, token))
+    conn.commit()
+    conn.close()
+
+
+def update_user_info(token, name, email):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.execute("UPDATE users SET name = ?, email = ? WHERE token = ?", (name.strip(), email.strip().lower(), token))
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        conn.close()
+        return False
 
 
 def classify_job(title):
@@ -793,6 +875,28 @@ class handler(BaseHTTPRequestHandler):
         elif path == "/api/scrape_status":
             self._json_response(200, {"is_scraping": False, "progress": 100})
 
+        elif path == "/api/user/profile":
+            auth = self.headers.get("Authorization", "")
+            token = auth.replace("Bearer ", "") if auth.startswith("Bearer ") else ""
+            if not token:
+                self._json_response(401, {"success": False, "error": "Token requerido"})
+                return
+            user = get_user_by_token(token)
+            if not user:
+                self._json_response(401, {"success": False, "error": "Token invalido"})
+                return
+            cv_profile = None
+            if user["cv_profile"]:
+                try:
+                    cv_profile = json.loads(user["cv_profile"])
+                except Exception:
+                    cv_profile = None
+            self._json_response(200, {
+                "success": True,
+                "user": {"id": user["id"], "name": user["name"], "email": user["email"]},
+                "cv_profile": cv_profile
+            })
+
         elif path == "/api/cron":
             try:
                 keywords = get_active_keywords()
@@ -1275,6 +1379,80 @@ Oferta laboral:
                     self._json_response(200, {"success": False, "error": f"Groq API error: {resp.status_code}"})
             except json.JSONDecodeError:
                 self._json_response(200, {"success": False, "error": "No se pudo interpretar la respuesta de la IA", "fallback": True})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
+        elif path == "/api/register":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                name = body.get("name", "").strip()
+                email = body.get("email", "").strip()
+                password = body.get("password", "")
+
+                if not name or not email or not password:
+                    self._json_response(400, {"success": False, "error": "Nombre, email y contrasena son requeridos"})
+                    return
+                if len(password) < 6:
+                    self._json_response(400, {"success": False, "error": "La contrasena debe tener al menos 6 caracteres"})
+                    return
+
+                user = register_user(name, email, password)
+                if user:
+                    self._json_response(200, {"success": True, "user": user})
+                else:
+                    self._json_response(409, {"success": False, "error": "Ya existe una cuenta con ese email"})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
+        elif path == "/api/login":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                email = body.get("email", "").strip()
+                password = body.get("password", "")
+
+                if not email or not password:
+                    self._json_response(400, {"success": False, "error": "Email y contrasena son requeridos"})
+                    return
+
+                user = login_user(email, password)
+                if user:
+                    self._json_response(200, {"success": True, "user": user})
+                else:
+                    self._json_response(401, {"success": False, "error": "Email o contrasena incorrectos"})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
+        elif path == "/api/user/profile":
+            try:
+                auth = self.headers.get("Authorization", "")
+                token = auth.replace("Bearer ", "") if auth.startswith("Bearer ") else ""
+                if not token:
+                    self._json_response(401, {"success": False, "error": "Token requerido"})
+                    return
+
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                action = body.get("action", "save")
+
+                if action == "save":
+                    cv_profile = body.get("cv_profile", {})
+                    save_user_profile(token, json.dumps(cv_profile))
+                    self._json_response(200, {"success": True, "message": "Perfil guardado"})
+                elif action == "update_info":
+                    name = body.get("name", "").strip()
+                    email = body.get("email", "").strip()
+                    if not name or not email:
+                        self._json_response(400, {"success": False, "error": "Nombre y email requeridos"})
+                        return
+                    ok = update_user_info(token, name, email)
+                    if ok:
+                        self._json_response(200, {"success": True, "message": "Datos actualizados"})
+                    else:
+                        self._json_response(409, {"success": False, "error": "El email ya esta en uso"})
+                else:
+                    self._json_response(400, {"success": False, "error": "Accion no valida"})
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
 

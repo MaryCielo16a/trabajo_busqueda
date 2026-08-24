@@ -691,6 +691,198 @@
             .modal-info-grid { grid-template-columns: 1fr; }
         }
 
+        /* Auth Bar */
+        .auth-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .auth-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+        .auth-bar-left .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .auth-bar-right {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-auth {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-login { background: #667eea; color: white; }
+        .btn-login:hover { background: #5568d3; }
+        .btn-register { background: #764ba2; color: white; }
+        .btn-register:hover { background: #5e3a87; }
+        .btn-logout { background: #f0f0f0; color: #666; }
+        .btn-logout:hover { background: #e0e0e0; }
+
+        /* Auth Modal */
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .auth-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .auth-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+        .auth-overlay.open .auth-modal {
+            transform: translateY(0);
+        }
+        .auth-modal h2 {
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 22px;
+        }
+        .auth-modal .auth-subtitle {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .auth-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .auth-form-group {
+            margin-bottom: 14px;
+        }
+        .auth-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        .auth-form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .auth-form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .auth-submit {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 6px;
+        }
+        .auth-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .auth-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .auth-error {
+            background: #fff0f0;
+            color: #d32f2f;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .auth-success {
+            background: #f0fff4;
+            color: #2e7d32;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .auth-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .auth-close:hover { color: #333; }
+        .auth-modal { position: relative; }
+
+        @media (max-width: 600px) {
+            .auth-bar { flex-direction: column; text-align: center; }
+            .auth-bar-right { justify-content: center; }
+        }
+
         /* Mi Perfil Section */
         .profile-section {
             background: white;
@@ -1437,6 +1629,17 @@
 <body>
     <div class="container">
         <!-- Header -->
+        <!-- Auth Bar -->
+        <div class="auth-bar" id="authBar">
+            <div class="auth-bar-left" id="authBarLeft">
+                <span>Inicia sesion para guardar tu perfil en la nube</span>
+            </div>
+            <div class="auth-bar-right" id="authBarRight">
+                <button class="btn-auth btn-login" onclick="openAuthModal('login')">Iniciar sesion</button>
+                <button class="btn-auth btn-register" onclick="openAuthModal('register')">Registrarse</button>
+            </div>
+        </div>
+
         <div class="header">
             <h1>💼 Job Search Automation - Peru</h1>
             <p>Busqueda automatica en Computrabajo, Bumeran, Indeed, LinkedIn, Empleos Peru, Opcionempleo y Jobs First</p>
@@ -1619,6 +1822,51 @@
         </div>
     </div>
 
+    <!-- Auth Modal -->
+    <div class="auth-overlay" id="authOverlay" onclick="if(event.target===this)closeAuthModal()">
+        <div class="auth-modal">
+            <button class="auth-close" onclick="closeAuthModal()">&times;</button>
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Iniciar sesion</div>
+                <div class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Registrarse</div>
+            </div>
+            <div id="authError" class="auth-error"></div>
+            <div id="authSuccess" class="auth-success"></div>
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="auth-form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="tu@email.com" onkeypress="if(event.key==='Enter')submitLogin()">
+                </div>
+                <div class="auth-form-group">
+                    <label>Contrasena</label>
+                    <input type="password" id="loginPassword" placeholder="Tu contrasena" onkeypress="if(event.key==='Enter')submitLogin()">
+                </div>
+                <button class="auth-submit" id="loginBtn" onclick="submitLogin()">Iniciar sesion</button>
+            </div>
+            <!-- Register Form -->
+            <div id="registerForm" style="display:none">
+                <div class="auth-form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="regName" placeholder="Ej: Maria Garcia" onkeypress="if(event.key==='Enter')submitRegister()">
+                </div>
+                <div class="auth-form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="tu@email.com" onkeypress="if(event.key==='Enter')submitRegister()">
+                </div>
+                <div class="auth-form-group">
+                    <label>Contrasena (minimo 6 caracteres)</label>
+                    <input type="password" id="regPassword" placeholder="Tu contrasena" onkeypress="if(event.key==='Enter')submitRegister()">
+                </div>
+                <div class="auth-form-group">
+                    <label>Confirmar contrasena</label>
+                    <input type="password" id="regPasswordConfirm" placeholder="Repite tu contrasena" onkeypress="if(event.key==='Enter')submitRegister()">
+                </div>
+                <button class="auth-submit" id="registerBtn" onclick="submitRegister()">Crear cuenta</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Dream AI Assistant -->
     <button class="dream-fab" onclick="toggleDream()" title="Dream - Asistente IA">🤖</button>
     <div class="dream-chat" id="dreamChat">
@@ -1646,6 +1894,185 @@
     </div>
 
     <script>
+        // ---- AUTH SYSTEM ----
+        function getAuthUser() {
+            try {
+                const u = localStorage.getItem('auth_user');
+                return u ? JSON.parse(u) : null;
+            } catch { return null; }
+        }
+
+        function setAuthUser(user) {
+            localStorage.setItem('auth_user', JSON.stringify(user));
+            renderAuthBar();
+        }
+
+        function clearAuth() {
+            localStorage.removeItem('auth_user');
+            renderAuthBar();
+        }
+
+        function renderAuthBar() {
+            const user = getAuthUser();
+            const left = document.getElementById('authBarLeft');
+            const right = document.getElementById('authBarRight');
+            if (user) {
+                const initials = user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                left.innerHTML = `<div class="user-avatar">${initials}</div><span>Hola, <b>${escapeHtml(user.name)}</b></span>`;
+                right.innerHTML = `<button class="btn-auth btn-logout" onclick="syncProfileToCloud()" title="Guardar perfil en la nube">☁ Sincronizar</button><button class="btn-auth btn-logout" onclick="logoutUser()">Cerrar sesion</button>`;
+            } else {
+                left.innerHTML = '<span>Inicia sesion para guardar tu perfil en la nube</span>';
+                right.innerHTML = '<button class="btn-auth btn-login" onclick="openAuthModal(\'login\')">Iniciar sesion</button><button class="btn-auth btn-register" onclick="openAuthModal(\'register\')">Registrarse</button>';
+            }
+        }
+
+        function openAuthModal(tab) {
+            document.getElementById('authOverlay').classList.add('open');
+            switchAuthTab(tab || 'login');
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authOverlay').classList.remove('open');
+        }
+
+        function switchAuthTab(tab) {
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+
+        function showAuthError(msg) {
+            const el = document.getElementById('authError');
+            el.textContent = msg;
+            el.style.display = 'block';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+
+        function showAuthSuccess(msg) {
+            const el = document.getElementById('authSuccess');
+            el.textContent = msg;
+            el.style.display = 'block';
+            document.getElementById('authError').style.display = 'none';
+        }
+
+        async function submitLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) { showAuthError('Completa todos los campos'); return; }
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Ingresando...';
+            try {
+                const resp = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    setAuthUser(data.user);
+                    closeAuthModal();
+                    loadProfileFromCloud();
+                } else {
+                    showAuthError(data.error || 'Error al iniciar sesion');
+                }
+            } catch (e) {
+                showAuthError('Error de conexion');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Iniciar sesion';
+            }
+        }
+
+        async function submitRegister() {
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regPasswordConfirm').value;
+
+            if (!name || !email || !password) { showAuthError('Completa todos los campos'); return; }
+            if (password.length < 6) { showAuthError('La contrasena debe tener al menos 6 caracteres'); return; }
+            if (password !== confirm) { showAuthError('Las contrasenas no coinciden'); return; }
+
+            const btn = document.getElementById('registerBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creando cuenta...';
+            try {
+                const resp = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    setAuthUser(data.user);
+                    const cvd = getCVData();
+                    cvd.name = name;
+                    cvd.email = email;
+                    saveCVData(cvd);
+                    syncProfileToCloud();
+                    closeAuthModal();
+                } else {
+                    showAuthError(data.error || 'Error al registrar');
+                }
+            } catch (e) {
+                showAuthError('Error de conexion');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Crear cuenta';
+            }
+        }
+
+        function logoutUser() {
+            clearAuth();
+        }
+
+        async function syncProfileToCloud() {
+            const user = getAuthUser();
+            if (!user || !user.token) return;
+            try {
+                const cvd = getCVData();
+                const resp = await fetch('/api/user/profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + user.token
+                    },
+                    body: JSON.stringify({ action: 'save', cv_profile: cvd })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    const msg = document.getElementById('profileSavedMsg');
+                    msg.textContent = 'Sincronizado en la nube!';
+                    msg.style.display = 'inline';
+                    setTimeout(() => { msg.style.display = 'none'; msg.textContent = 'Guardado!'; }, 2500);
+                }
+            } catch (e) {}
+        }
+
+        async function loadProfileFromCloud() {
+            const user = getAuthUser();
+            if (!user || !user.token) return;
+            try {
+                const resp = await fetch('/api/user/profile', {
+                    headers: { 'Authorization': 'Bearer ' + user.token }
+                });
+                const data = await resp.json();
+                if (data.success && data.cv_profile) {
+                    localStorage.setItem('cv_profile', JSON.stringify(data.cv_profile));
+                    if (document.getElementById('profileContent').classList.contains('open')) {
+                        renderProfile();
+                    }
+                }
+            } catch (e) {}
+        }
+
         function getStoredJobs() {
             try {
                 return JSON.parse(localStorage.getItem('jobs') || '[]');
@@ -1758,8 +2185,10 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            renderAuthBar();
             loadFilters();
             renderJobs();
+            if (getAuthUser()) loadProfileFromCloud();
         });
 
         document.getElementById('remoteOnly').addEventListener('change', () => { currentPage = 1; renderJobs(); });
@@ -2405,6 +2834,10 @@
             const msg = document.getElementById('profileSavedMsg');
             msg.style.display = 'inline';
             setTimeout(() => msg.style.display = 'none', 2000);
+            if (getAuthUser()) {
+                clearTimeout(saveCVData._syncTimeout);
+                saveCVData._syncTimeout = setTimeout(syncProfileToCloud, 2000);
+            }
         }
 
         function toggleProfile() {
