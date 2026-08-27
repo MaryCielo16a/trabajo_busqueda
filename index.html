@@ -1172,6 +1172,149 @@
             margin-left: 10px;
         }
 
+        /* External Job CV Generator */
+        .external-cv-section {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #c8e6c9;
+        }
+
+        .external-cv-section h2 {
+            margin: 0 0 12px 0;
+            color: #2e7d32;
+            font-size: 18px;
+        }
+
+        .external-cv-section p {
+            color: #555;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .external-cv-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .external-cv-tab {
+            padding: 8px 16px;
+            border: 2px solid #c8e6c9;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .external-cv-tab.active {
+            background: #43a047;
+            color: white;
+            border-color: #43a047;
+        }
+
+        .external-cv-tab:hover:not(.active) {
+            border-color: #43a047;
+            color: #2e7d32;
+        }
+
+        .external-cv-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .external-cv-input-group input {
+            flex: 1;
+            padding: 12px 14px;
+            border: 2px solid #c8e6c9;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .external-cv-input-group input:focus {
+            border-color: #43a047;
+        }
+
+        .external-cv-input-group textarea {
+            flex: 1;
+            padding: 12px 14px;
+            border: 2px solid #c8e6c9;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .external-cv-input-group textarea:focus {
+            border-color: #43a047;
+        }
+
+        .btn-generate-external {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #43a047, #2e7d32);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-generate-external:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(67, 160, 71, 0.4);
+        }
+
+        .btn-generate-external:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .external-cv-preview {
+            background: white;
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 10px;
+            border: 1px solid #e0e0e0;
+            display: none;
+        }
+
+        .external-cv-preview h4 {
+            margin: 0 0 6px;
+            color: #1a1a2e;
+        }
+
+        .external-cv-preview p {
+            margin: 0;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .external-cv-preview .tag {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin: 4px 4px 0 0;
+        }
+
         .quick-fill {
             background: #f0f2ff;
             border: 2px dashed #667eea;
@@ -1735,6 +1878,39 @@
                 <button onclick="addFilter()">+ Agregar</button>
             </div>
             <p class="filter-info">Click en un filtro para activar/desactivar. La X lo elimina. Estos filtros se usan en la busqueda automatica diaria.</p>
+        </div>
+
+        <!-- Generar CV desde oferta externa -->
+        <div class="external-cv-section">
+            <h2>🌐 Generar CV desde oferta externa</h2>
+            <p>¿Encontraste una oferta en LinkedIn, Indeed u otra plataforma? Pega la URL o la descripción y generamos tu CV adaptado.</p>
+
+            <div class="external-cv-tabs">
+                <button class="external-cv-tab active" onclick="switchExternalTab('url')">🔗 Pegar URL</button>
+                <button class="external-cv-tab" onclick="switchExternalTab('text')">📝 Pegar descripción</button>
+            </div>
+
+            <div id="externalUrlInput" class="external-cv-input-group">
+                <input type="text" id="externalJobUrl" placeholder="https://www.linkedin.com/jobs/view/..." onkeypress="if(event.key==='Enter')extractAndPreview()">
+                <button class="btn-generate-external" id="btnExtractJob" onclick="extractAndPreview()">🔍 Analizar oferta</button>
+            </div>
+
+            <div id="externalTextInput" class="external-cv-input-group" style="display:none">
+                <textarea id="externalJobText" placeholder="Pega aquí la descripción completa de la oferta laboral...&#10;&#10;Ejemplo:&#10;Título: Desarrollador Frontend&#10;Empresa: TechCorp&#10;Requisitos: React, TypeScript, 2 años de experiencia..."></textarea>
+                <button class="btn-generate-external" id="btnExtractText" onclick="extractAndPreview()" style="align-self:flex-end;">🔍 Analizar</button>
+            </div>
+
+            <div class="external-cv-preview" id="externalJobPreview">
+                <h4 id="externalJobTitle">-</h4>
+                <p id="externalJobCompany" style="font-weight:600;color:#333;margin-bottom:4px;"></p>
+                <p id="externalJobDesc"></p>
+                <div id="externalJobTags" style="margin-top:6px;"></div>
+                <div style="margin-top:12px;text-align:center;">
+                    <button class="btn-generate-external" onclick="generateCVFromExternal()" style="font-size:16px;padding:14px 32px;">
+                        📄 Generar mi CV para esta oferta
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Mi Perfil -->
@@ -4247,10 +4423,10 @@
         function condenseJobForReview(job) {
             let t = `Puesto: ${job.title}\n`;
             t += `Empresa: ${job.company || 'No especificada'}\n`;
-            t += `Categoria: ${CATEGORY_LABELS[job.category] || 'Otro'}\n`;
+            t += `Categoria: ${(CATEGORY_LABELS || {})[job.category] || job.category || 'Otro'}\n`;
             t += `Ubicacion: ${job.is_remote ? 'Remoto' : (job.location || 'No especificada')}\n`;
-            if (job.description) t += `Descripcion: ${job.description.substring(0, 500)}\n`;
-            return t.substring(0, 1000);
+            if (job.description) t += `Descripcion: ${job.description.substring(0, 1500)}\n`;
+            return t.substring(0, 2000);
         }
 
         function filterByAIReview(items, includeList, field) {
@@ -4273,6 +4449,125 @@
                     return kl.includes(incL) || incL.includes(kl);
                 });
             });
+        }
+
+        // ---- External Job CV Generator ----
+        let currentExternalJob = null;
+
+        function switchExternalTab(tab) {
+            document.querySelectorAll('.external-cv-tab').forEach(t => t.classList.remove('active'));
+            if (tab === 'url') {
+                document.getElementById('externalUrlInput').style.display = 'flex';
+                document.getElementById('externalTextInput').style.display = 'none';
+                document.querySelectorAll('.external-cv-tab')[0].classList.add('active');
+            } else {
+                document.getElementById('externalUrlInput').style.display = 'none';
+                document.getElementById('externalTextInput').style.display = 'flex';
+                document.querySelectorAll('.external-cv-tab')[1].classList.add('active');
+            }
+            document.getElementById('externalJobPreview').style.display = 'none';
+        }
+
+        async function extractAndPreview() {
+            const urlInput = document.getElementById('externalJobUrl');
+            const textInput = document.getElementById('externalJobText');
+            const isUrl = document.getElementById('externalUrlInput').style.display !== 'none';
+            const url = isUrl ? urlInput.value.trim() : '';
+            const text = !isUrl ? textInput.value.trim() : '';
+
+            if (!url && !text) {
+                alert(isUrl ? 'Pega la URL de la oferta laboral' : 'Pega la descripción de la oferta laboral');
+                return;
+            }
+
+            const btns = document.querySelectorAll('.btn-generate-external');
+            const btn = isUrl ? document.getElementById('btnExtractJob') : document.getElementById('btnExtractText');
+            btn.disabled = true;
+            btn.textContent = '⏳ Analizando...';
+
+            try {
+                const resp = await fetch('/api/extract-job', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(url ? { url } : { text })
+                });
+                const data = await resp.json();
+
+                if (data.success && data.job) {
+                    currentExternalJob = data.job;
+                    currentExternalJob.id = 'external_' + Date.now();
+                    if (url) currentExternalJob.url = url;
+
+                    const preview = document.getElementById('externalJobPreview');
+                    document.getElementById('externalJobTitle').textContent = currentExternalJob.title || 'Oferta laboral';
+                    document.getElementById('externalJobCompany').textContent = currentExternalJob.company || '';
+
+                    const desc = currentExternalJob.description || '';
+                    document.getElementById('externalJobDesc').textContent = desc.substring(0, 300) + (desc.length > 300 ? '...' : '');
+
+                    const tagsDiv = document.getElementById('externalJobTags');
+                    tagsDiv.innerHTML = '';
+                    if (currentExternalJob.category && currentExternalJob.category !== 'otro') {
+                        tagsDiv.innerHTML += `<span class="tag">📂 ${currentExternalJob.category}</span>`;
+                    }
+                    if (currentExternalJob.is_remote) {
+                        tagsDiv.innerHTML += `<span class="tag">🏠 Remoto</span>`;
+                    }
+                    if (currentExternalJob.location) {
+                        tagsDiv.innerHTML += `<span class="tag">📍 ${currentExternalJob.location}</span>`;
+                    }
+                    tagsDiv.innerHTML += `<span class="tag">🌐 ${currentExternalJob.source}</span>`;
+
+                    preview.style.display = 'block';
+                } else {
+                    alert('No se pudo extraer la información: ' + (data.error || 'Error desconocido'));
+                }
+            } catch(e) {
+                alert('Error de conexión: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.textContent = isUrl ? '🔍 Analizar oferta' : '🔍 Analizar';
+        }
+
+        function generateCVFromExternal() {
+            if (!currentExternalJob) {
+                alert('Primero analiza una oferta laboral');
+                return;
+            }
+            generateCVFromJob(currentExternalJob);
+        }
+
+        function generateCVFromJob(job) {
+            const cvd = getCVData();
+            if (!cvd.name) {
+                alert('Primero completa tu perfil en la sección "Mi Perfil" más abajo');
+                return;
+            }
+
+            let profileTitle = getJobProfileTitle(job);
+            const relevantTags = getRelevantTags(job);
+            let sortedCerts = sortByRelevance(cvd.certifications, relevantTags);
+            let sortedExp = sortByRelevance(cvd.experience, relevantTags);
+            let sortedExtra = sortByRelevance(cvd.extracurricular, relevantTags);
+            let skills = getRelevantSkills(job);
+            const interests = getRelevantInterests(job);
+
+            sortedCerts = sortedCerts.slice(0, 8);
+            sortedExp.forEach(e => { if (e.roles && e.roles.length > 3) e.roles = e.roles.slice(0, 3); });
+            sortedExtra = sortedExtra.slice(0, 3);
+            sortedExtra.forEach(e => { if (e.roles && e.roles.length > 3) e.roles = e.roles.slice(0, 3); });
+
+            const condensedCV = condenseCVForReview(cvd, profileTitle);
+            const condensedJob = condenseJobForReview(job);
+
+            // Use the same generateCV flow but with the external job
+            const fakeJobId = job.id;
+            // Store temporarily for generateCV to find
+            const storedJobs = getStoredJobs();
+            storedJobs.push(job);
+            try { localStorage.setItem('jobs', JSON.stringify(storedJobs)); } catch(e) {}
+            generateCV(fakeJobId);
         }
 
         async function generateCV(jobId) {

@@ -1632,6 +1632,107 @@ Mejora el CV aplicando las sugerencias. Responde SOLO con el JSON:"""
             except Exception as e:
                 self._json_response(500, {"success": False, "error": str(e)})
 
+        elif path == "/api/extract-job":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_length)) if content_length else {}
+                url = body.get("url", "").strip()
+                manual_text = body.get("text", "").strip()
+
+                if not url and not manual_text:
+                    self._json_response(400, {"success": False, "error": "URL o texto requerido"})
+                    return
+
+                job_data = {
+                    "title": "",
+                    "company": "",
+                    "description": "",
+                    "location": "",
+                    "is_remote": False,
+                    "category": "otro",
+                    "source": "externo"
+                }
+
+                if manual_text:
+                    # User pasted text directly
+                    job_data["description"] = manual_text[:4000]
+                    # Try to extract title from first line
+                    lines = manual_text.strip().split("\n")
+                    if lines:
+                        job_data["title"] = lines[0][:200]
+                elif url:
+                    session = requests.Session()
+                    session.headers.update(HEADERS)
+                    resp = session.get(url, timeout=10)
+
+                    if resp.status_code != 200:
+                        self._json_response(200, {"success": False, "error": f"No se pudo acceder a la URL (status {resp.status_code})"})
+                        return
+
+                    soup = BeautifulSoup(resp.content, "html.parser")
+
+                    for tag in soup.find_all(["script", "style", "nav", "footer", "header", "iframe"]):
+                        tag.decompose()
+
+                    # Extract title
+                    title_el = (
+                        soup.find("h1")
+                        or soup.find("title")
+                    )
+                    if title_el:
+                        job_data["title"] = title_el.get_text(strip=True)[:200]
+
+                    # Extract company
+                    company_el = soup.find(string=lambda s: s and any(w in s.lower() for w in ["empresa", "company", "empleador", "compañía"]))
+                    if company_el:
+                        parent = company_el.find_parent()
+                        if parent:
+                            job_data["company"] = parent.get_text(strip=True)[:200]
+
+                    # Extract description
+                    desc_el = (
+                        soup.find("div", {"class": lambda c: c and any(x in (c if isinstance(c, str) else ' '.join(c)) for x in ["description", "descripcion", "detail", "detalle", "content", "body", "vacancy", "job-description"])})
+                        or soup.find("section", {"class": lambda c: c and any(x in (c if isinstance(c, str) else ' '.join(c)) for x in ["description", "detail"])})
+                        or soup.find("article")
+                    )
+                    if desc_el:
+                        job_data["description"] = desc_el.get_text(separator="\n", strip=True)[:4000]
+                    else:
+                        main = soup.find("main") or soup.find("body")
+                        if main:
+                            job_data["description"] = main.get_text(separator="\n", strip=True)[:4000]
+
+                    # Extract location
+                    loc_el = soup.find(string=lambda s: s and any(w in s.lower() for w in ["ubicación", "ubicacion", "location", "sede", "lugar"]))
+                    if loc_el:
+                        parent = loc_el.find_parent()
+                        if parent:
+                            job_data["location"] = parent.get_text(strip=True)[:200]
+
+                    # Check remote
+                    full_text = (job_data["description"] + " " + job_data["title"]).lower()
+                    if any(w in full_text for w in ["remoto", "remote", "teletrabajo", "trabajo remoto", "home office"]):
+                        job_data["is_remote"] = True
+
+                    # Detect category
+                    t = full_text
+                    if any(w in t for w in ["data", "datos", "analista", "bi ", "analytics", "power bi"]):
+                        job_data["category"] = "data"
+                    elif any(w in t for w in ["frontend", "front-end", "react", "vue", "angular"]):
+                        job_data["category"] = "frontend"
+                    elif any(w in t for w in ["backend", "back-end", "java", "spring", "django", "node.js", "express"]):
+                        job_data["category"] = "backend"
+                    elif any(w in t for w in ["fullstack", "full stack", "full-stack"]):
+                        job_data["category"] = "fullstack"
+                    elif any(w in t for w in ["devops", "cloud", "aws", "azure", "docker", "kubernetes"]):
+                        job_data["category"] = "devops"
+                    elif any(w in t for w in ["qa", "testing", "tester", "calidad"]):
+                        job_data["category"] = "qa"
+
+                self._json_response(200, {"success": True, "job": job_data})
+            except Exception as e:
+                self._json_response(500, {"success": False, "error": str(e)})
+
         else:
             self._json_response(404, {"success": False, "error": "Not found"})
 
